@@ -17,7 +17,8 @@ import {
   isYearCode,
   toSeq,
 } from '@/lib/asset-no';
-import { getNextSeq } from '@/lib/queries';
+import { findAssetByNo, getNextSeq } from '@/lib/queries';
+import { STATUS_LABELS } from '@/lib/constants';
 import { cleanMoneyInput, isCalendarDate, isMoneyAmount, today } from '@/lib/format';
 import { type FormState, toErrorMessage, zodToFieldErrors } from './types';
 
@@ -52,11 +53,18 @@ const optionalMoney = z
   .optional()
   .transform((v) => v ?? null);
 
-const assetSchema = z.object({
-  name: z.string().trim().min(1, '자산명을 입력하세요.').max(200, '200자 이내로 입력하세요.'),
+/**
+ * 자산번호를 이루는 항목. **등록할 때만** 받습니다.
+ *
+ * 한 번 부여한 번호는 바꾸지 않습니다 — 라벨이 이미 물건에 붙어 있고, 번호가
+ * 바뀌면 물건과 기록이 어긋납니다. 그래서 수정 액션은 이 스키마를 쓰지 않고,
+ * 요청에 번호 값이 들어와도 무시합니다(화면에서 칸을 감추는 것만으로는
+ * 요청을 직접 만들어 보내는 경우를 막지 못합니다).
+ */
+const assetNoSchema = z.object({
   yearCode: z.string().trim().refine(isYearCode, '취득연도를 선택하세요.'),
   buildingCode: z.string().trim().refine(isCode, '건물/위치를 선택하세요.'),
-  deptCode: z.string().trim().refine(isCode, '관리 사역원을 선택하세요.'),
+  deptCode: z.string().trim().refine(isCode, '관리부서를 선택하세요.'),
   seq: z
     .string()
     .trim()
@@ -64,6 +72,11 @@ const assetSchema = z.object({
     .transform((v) => v.padStart(SEQ_DIGITS, '0'))
     .refine(isSeq, `고유번호는 ${SEQ_DIGITS}자리 숫자입니다.`)
     .refine((v) => Number(v) > 0, `고유번호는 ${toSeq(1)} 부터 시작합니다.`),
+});
+
+/** 자산번호를 뺀 나머지 항목 — 등록·수정이 함께 씁니다. */
+const assetFieldsSchema = z.object({
+  name: z.string().trim().min(1, '자산명을 입력하세요.').max(200, '200자 이내로 입력하세요.'),
   teamName: optionalText(100),
   location: optionalText(200),
   acquiredDate: optionalDate,
@@ -87,14 +100,12 @@ const assetSchema = z.object({
   disposalNote: optionalText(2000),
 });
 
-function readAssetForm(formData: FormData) {
+const createAssetSchema = assetNoSchema.merge(assetFieldsSchema);
+
+function readFields(formData: FormData) {
   const value = (key: string) => (formData.get(key) ?? '').toString();
-  return assetSchema.safeParse({
+  return {
     name: value('name'),
-    yearCode: value('yearCode'),
-    buildingCode: value('buildingCode'),
-    deptCode: value('deptCode'),
-    seq: value('seq'),
     teamName: value('teamName'),
     location: value('location'),
     acquiredDate: value('acquiredDate'),
@@ -112,11 +123,27 @@ function readAssetForm(formData: FormData) {
     disposedDate: value('disposedDate'),
     disposalReason: value('disposalReason'),
     disposalNote: value('disposalNote'),
+  };
+}
+
+function readCreateForm(formData: FormData) {
+  const value = (key: string) => (formData.get(key) ?? '').toString();
+  return createAssetSchema.safeParse({
+    ...readFields(formData),
+    yearCode: value('yearCode'),
+    buildingCode: value('buildingCode'),
+    deptCode: value('deptCode'),
+    seq: value('seq'),
   });
 }
 
+/** 수정은 번호 항목을 아예 파싱하지 않습니다 — 요청에 들어와도 쓰이지 않습니다. */
+function readUpdateForm(formData: FormData) {
+  return assetFieldsSchema.safeParse(readFields(formData));
+}
+
 /** 폐기 상태면 폐기일자를 반드시 남기고, 폐기가 아니면 폐기 기록을 비웁니다. */
-function reconcileDisposal(data: z.infer<typeof assetSchema>) {
+function reconcileDisposal(data: z.infer<typeof assetFieldsSchema>) {
   if (data.status === 'disposed') {
     return {
       disposedDate: data.disposedDate ?? today(),
@@ -134,7 +161,7 @@ export async function createAssetAction(_prev: FormState, formData: FormData): P
 
   try {
     const session = await requireEditor();
-    const parsed = readAssetForm(formData);
+    const parsed = readCreateForm(formData);
     if (!parsed.success) {
       return { ok: false, fieldErrors: zodToFieldErrors(parsed.error.issues) };
     }
@@ -174,16 +201,30 @@ export async function createAssetAction(_prev: FormState, formData: FormData): P
     createdNo = row.assetNo;
   } catch (error) {
     if (isUniqueViolation(error)) {
+      // 번호를 이미 쓰고 있는 자산이 무엇인지 알려 줍니다. 특히 폐기한 자산은
+      // 목록의 기본 화면(폐기 제외)에 안 보여서, 이유를 밝히지 않으면 "빈 번호인데
+      // 왜 안 되나" 로 막힙니다. 폐기해도 기록은 남으므로 번호는 재사용하지
+      // 않습니다 — 완전 삭제한 번호만 다시 쓸 수 있습니다.
       const yearCode = (formData.get('yearCode') ?? '').toString();
       const buildingCode = (formData.get('buildingCode') ?? '').toString();
       const deptCode = (formData.get('deptCode') ?? '').toString();
-      const suggestion = await getNextSeq(yearCode, buildingCode, deptCode).catch(() => null);
+      const seq = (formData.get('seq') ?? '').toString();
+      const [holder, suggestion] = await Promise.all([
+        findAssetByNo(
+          `${yearCode}${buildingCode}${deptCode}${seq.padStart(SEQ_DIGITS, '0')}`,
+        ).catch(() => null),
+        getNextSeq(yearCode, buildingCode, deptCode).catch(() => null),
+      ]);
+      const holderText = holder
+        ? `이미 '${holder.name}' (${STATUS_LABELS[holder.status]}) 이 쓰고 있는 번호입니다.` +
+          (holder.status === 'disposed' ? ' 폐기한 자산의 번호는 다시 쓰지 않습니다.' : '')
+        : '이미 사용 중인 자산번호입니다.';
       return {
         ok: false,
         fieldErrors: {
           seq: suggestion
-            ? `이미 사용 중인 자산번호입니다. 사용 가능한 다음 번호: ${toSeq(suggestion)}`
-            : '이미 사용 중인 자산번호입니다.',
+            ? `${holderText} 사용 가능한 다음 번호: ${toSeq(suggestion)}`
+            : holderText,
         },
       };
     }
@@ -194,7 +235,7 @@ export async function createAssetAction(_prev: FormState, formData: FormData): P
   revalidatePath('/');
 
   if (continueRegistering) {
-    // 연속 등록: 같은 건물/사역원으로 폼을 비우고 다음 번호를 미리 채웁니다.
+    // 연속 등록: 같은 건물/부서으로 폼을 비우고 다음 번호를 미리 채웁니다.
     const params = new URLSearchParams({
       year: (formData.get('yearCode') ?? '').toString(),
       building: (formData.get('buildingCode') ?? '').toString(),
@@ -217,21 +258,17 @@ export async function updateAssetAction(_prev: FormState, formData: FormData): P
 
   try {
     const session = await requireEditor();
-    const parsed = readAssetForm(formData);
+    const parsed = readUpdateForm(formData);
     if (!parsed.success) {
       return { ok: false, fieldErrors: zodToFieldErrors(parsed.error.issues) };
     }
     const data = parsed.data;
-    const assetNo = buildAssetNo(data);
 
+    // assetNo·yearCode·buildingCode·deptCode·seq 는 일부러 빼 둡니다.
+    // 등록할 때 정한 번호를 그대로 유지합니다.
     const updated = await db
       .update(assets)
       .set({
-        assetNo,
-        yearCode: data.yearCode,
-        buildingCode: data.buildingCode,
-        deptCode: data.deptCode,
-        seq: data.seq,
         name: data.name,
         teamName: data.teamName,
         location: data.location,
@@ -256,9 +293,6 @@ export async function updateAssetAction(_prev: FormState, formData: FormData): P
 
     if (updated.length === 0) return { ok: false, error: '자산을 찾을 수 없습니다.' };
   } catch (error) {
-    if (isUniqueViolation(error)) {
-      return { ok: false, fieldErrors: { seq: '이미 사용 중인 자산번호입니다.' } };
-    }
     return { ok: false, error: toErrorMessage(error) };
   }
 
@@ -400,7 +434,7 @@ export async function deleteMaintenanceAction(formData: FormData): Promise<void>
   revalidatePath(`/assets/${assetId}`);
 }
 
-/** 등록 폼에서 건물/사역원/연도를 바꿀 때 다음 고유번호를 받아옵니다. */
+/** 등록 폼에서 건물/부서/연도를 바꿀 때 다음 고유번호를 받아옵니다. */
 /**
  * 다음 고유번호 제안.
  *

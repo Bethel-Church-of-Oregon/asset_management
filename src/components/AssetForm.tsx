@@ -26,13 +26,13 @@ type Defaults = {
 type Props = {
   mode: 'create' | 'edit';
   lookups: Lookups;
-  /** 취득연도 선택 목록 (내림차순). */
-  yearOptions: { code: string; label: string }[];
+  /** 취득연도 선택 목록 (내림차순). 등록 화면에서만 씁니다. */
+  yearOptions?: { code: string; label: string }[];
   asset?: Asset;
   defaults?: Defaults;
 };
 
-export default function AssetForm({ mode, lookups, yearOptions, asset, defaults }: Props) {
+export default function AssetForm({ mode, lookups, yearOptions = [], asset, defaults }: Props) {
   const action = mode === 'create' ? createAssetAction : updateAssetAction;
   const [state, formAction] = useActionState(action, IDLE);
 
@@ -101,135 +101,147 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
       {asset ? <input type="hidden" name="id" value={asset.id} /> : null}
       {state.error ? <FormBanner state={state} /> : null}
 
-      {/* ── 자산번호 ─────────────────────────────────────────────────────── */}
-      <section className="card overflow-hidden">
-        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-3">
-          <h2 className="text-sm font-bold text-slate-900">자산번호</h2>
-          <p className="mt-0.5 text-xs text-slate-500">
-            연도 2자리 + 건물 2자리 + 사역원 2자리 + 고유번호 4자리
-          </p>
-        </div>
-
-        <div className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-start">
-          <div className="grid gap-4 sm:grid-cols-4">
-            <Field label="취득연도" htmlFor="yearCode" required error={errors.yearCode}>
-              <select
-                id="yearCode"
-                name="yearCode"
-                className="field-input mono"
-                value={yearCode}
-                onChange={(e) => setYearCode(e.target.value)}
-                required
-              >
-                {yearOptions.map((y) => (
-                  <option key={y.code} value={y.code}>
-                    {y.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="건물 / 위치" htmlFor="buildingCode" required error={errors.buildingCode}>
-              <select
-                id="buildingCode"
-                name="buildingCode"
-                className="field-input"
-                value={buildingCode}
-                onChange={(e) => setBuildingCode(e.target.value)}
-                required
-              >
-                <option value="">선택</option>
-                {lookups.buildings.map((b) => (
-                  <option key={b.code} value={b.code}>
-                    {b.code} · {b.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="관리 사역원" htmlFor="deptCode" required error={errors.deptCode}>
-              <select
-                id="deptCode"
-                name="deptCode"
-                className="field-input"
-                value={deptCode}
-                onChange={(e) => {
-                  setDeptCode(e.target.value);
-                  // 팀명을 비워뒀다면 사역원 이름으로 채워 줍니다.
-                  const next = lookups.departments.find((d) => d.code === e.target.value);
-                  if (next && teamName.trim() === '') setTeamName(next.name);
-                }}
-                required
-              >
-                <option value="">선택</option>
-                {lookups.departments.map((d) => (
-                  <option key={d.code} value={d.code}>
-                    {d.code} · {d.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field
-              label="고유번호"
-              htmlFor="seq"
-              required
-              error={errors.seq}
-              hint={
-                seqNotice ??
-                (autoSeq
-                  ? suggesting
-                    ? '다음 번호 조회 중...'
-                    : '자동 제안됩니다. 필요하면 직접 수정하세요.'
-                  : '번호를 바꾸면 바코드를 다시 출력해야 합니다.')
-              }
-            >
-              <input
-                id="seq"
-                name="seq"
-                type="text"
-                inputMode="numeric"
-                maxLength={SEQ_DIGITS}
-                className="field-input mono text-center tracking-widest"
-                placeholder={toSeq(1)}
-                value={seq}
-                onChange={(e) => {
-                  seqTouched.current = true;
-                  setSeq(e.target.value.replace(/[^\d]/g, '').slice(0, SEQ_DIGITS));
-                }}
-                onBlur={(e) => {
-                  const digits = e.target.value.replace(/[^\d]/g, '');
-                  if (digits) setSeq(digits.padStart(SEQ_DIGITS, '0'));
-                }}
-                required
-              />
-            </Field>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center lg:w-64">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              자산번호
-            </div>
-            <div className="mono mb-2 text-2xl font-bold tracking-wider text-slate-900">
-              {assetNoPreview ?? '—'}
-            </div>
-            {assetNoPreview ? (
-              <Barcode
-                value={assetNoBarcodeValue(assetNoPreview)}
-                moduleWidth={1.6}
-                height={44}
-                fontSize={0}
-                showText={false}
-                cssWidth="100%"
-              />
-            ) : (
-              <p className="py-3 text-xs text-slate-400">
-                항목을 모두 선택하면 바코드가 표시됩니다.
+      {/* 자산번호는 등록할 때만 정합니다. 한 번 부여한 번호는 바꾸지 않습니다 —
+          라벨을 이미 붙였고, 번호가 바뀌면 물건과 기록이 어긋납니다.
+          서버(updateAssetAction)도 수정 요청의 번호 값을 무시합니다. */}
+      {mode === 'create' ? (
+        <>
+          {/* ── 자산번호 ─────────────────────────────────────────────────────── */}
+          <section className="card overflow-hidden">
+            <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-3">
+              <h2 className="text-sm font-bold text-slate-900">자산번호</h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                연도 2자리 + 건물 2자리 + 부서 2자리 + 고유번호 4자리
               </p>
-            )}
-          </div>
-        </div>
-      </section>
+            </div>
+
+            <div className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-start">
+              <div className="grid gap-4 sm:grid-cols-4">
+                <Field label="취득연도" htmlFor="yearCode" required error={errors.yearCode}>
+                  <select
+                    id="yearCode"
+                    name="yearCode"
+                    className="field-input mono"
+                    value={yearCode}
+                    onChange={(e) => setYearCode(e.target.value)}
+                    required
+                  >
+                    {yearOptions.map((y) => (
+                      <option key={y.code} value={y.code}>
+                        {y.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field
+                  label="건물 / 위치"
+                  htmlFor="buildingCode"
+                  required
+                  error={errors.buildingCode}
+                >
+                  <select
+                    id="buildingCode"
+                    name="buildingCode"
+                    className="field-input"
+                    value={buildingCode}
+                    onChange={(e) => setBuildingCode(e.target.value)}
+                    required
+                  >
+                    <option value="">선택</option>
+                    {lookups.buildings.map((b) => (
+                      <option key={b.code} value={b.code}>
+                        {b.code} · {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="관리부서" htmlFor="deptCode" required error={errors.deptCode}>
+                  <select
+                    id="deptCode"
+                    name="deptCode"
+                    className="field-input"
+                    value={deptCode}
+                    onChange={(e) => {
+                      setDeptCode(e.target.value);
+                      // 팀명을 비워뒀다면 부서 이름으로 채워 줍니다.
+                      const next = lookups.departments.find((d) => d.code === e.target.value);
+                      if (next && teamName.trim() === '') setTeamName(next.name);
+                    }}
+                    required
+                  >
+                    <option value="">선택</option>
+                    {lookups.departments.map((d) => (
+                      <option key={d.code} value={d.code}>
+                        {d.code} · {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field
+                  label="고유번호"
+                  htmlFor="seq"
+                  required
+                  error={errors.seq}
+                  hint={
+                    seqNotice ??
+                    (autoSeq
+                      ? suggesting
+                        ? '다음 번호 조회 중...'
+                        : '자동 제안됩니다. 필요하면 직접 수정하세요.'
+                      : '번호를 바꾸면 바코드를 다시 출력해야 합니다.')
+                  }
+                >
+                  <input
+                    id="seq"
+                    name="seq"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={SEQ_DIGITS}
+                    className="field-input mono text-center tracking-widest"
+                    placeholder={toSeq(1)}
+                    value={seq}
+                    onChange={(e) => {
+                      seqTouched.current = true;
+                      setSeq(e.target.value.replace(/[^\d]/g, '').slice(0, SEQ_DIGITS));
+                    }}
+                    onBlur={(e) => {
+                      const digits = e.target.value.replace(/[^\d]/g, '');
+                      if (digits) setSeq(digits.padStart(SEQ_DIGITS, '0'));
+                    }}
+                    required
+                  />
+                </Field>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center lg:w-64">
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  자산번호
+                </div>
+                <div className="mono mb-2 text-2xl font-bold tracking-wider text-slate-900">
+                  {assetNoPreview ?? '—'}
+                </div>
+                {assetNoPreview ? (
+                  <Barcode
+                    value={assetNoBarcodeValue(assetNoPreview)}
+                    moduleWidth={1.6}
+                    height={44}
+                    fontSize={0}
+                    showText={false}
+                    cssWidth="100%"
+                  />
+                ) : (
+                  <p className="py-3 text-xs text-slate-400">
+                    항목을 모두 선택하면 바코드가 표시됩니다.
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+        </>
+      ) : null}
 
       {/* ── 기본 정보 ────────────────────────────────────────────────────── */}
       <FormSection title="기본 정보">
@@ -239,7 +251,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
             name="name"
             className="field-input"
             defaultValue={asset?.name ?? ''}
-            placeholder="예: 유아방 TV (왼쪽)"
+            placeholder="예: 유아부실 TV (왼쪽)"
             maxLength={200}
             required
             autoFocus={mode === 'create'}
@@ -247,10 +259,10 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
         </Field>
 
         <Field
-          label="관리 사역원 팀명"
+          label="관리부서 팀명"
           htmlFor="teamName"
           error={errors.teamName}
-          hint={deptName ? `사역원: ${deptName}` : '예: 예배부 음향팀'}
+          hint={deptName ? `부서: ${deptName}` : '예: 예배사역원 미디어팀'}
         >
           <input
             id="teamName"
@@ -258,7 +270,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
             className="field-input"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
-            placeholder="예: 예배부 음향팀"
+            placeholder="예: 예배사역원 미디어팀"
             maxLength={100}
           />
         </Field>
@@ -267,14 +279,14 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
           label="설치 / 보관 장소"
           htmlFor="location"
           error={errors.location}
-          hint="예: 비전관 2층 유아방"
+          hint="예: 비전성전 유아부실"
         >
           <input
             id="location"
             name="location"
             className="field-input"
             defaultValue={asset?.location ?? defaults?.location ?? ''}
-            placeholder="예: 비전관 2층 유아방"
+            placeholder="예: 비전성전 유아부실"
             maxLength={200}
           />
         </Field>
@@ -477,7 +489,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
           {mode === 'create' ? '등록 완료' : '변경사항 저장'}
         </SubmitButton>
 
-        {/* 같은 건물·사역원·팀·장소를 유지한 빈 폼으로 돌아가 다음 번호를 채웁니다. */}
+        {/* 같은 건물·부서·팀·장소를 유지한 빈 폼으로 돌아가 다음 번호를 채웁니다. */}
         {mode === 'create' ? (
           <SubmitButton
             className="btn-secondary"

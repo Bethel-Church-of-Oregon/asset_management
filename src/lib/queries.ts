@@ -244,7 +244,12 @@ export async function findAssetByNo(input: string) {
   const normalized = normalizeAssetNo(input);
   if (!normalized) return null;
   const [row] = await db
-    .select({ id: assets.id, assetNo: assets.assetNo, name: assets.name })
+    .select({
+      id: assets.id,
+      assetNo: assets.assetNo,
+      name: assets.name,
+      status: assets.status,
+    })
     .from(assets)
     .where(eq(assets.assetNo, normalized))
     .limit(1);
