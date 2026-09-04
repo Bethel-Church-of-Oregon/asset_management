@@ -106,3 +106,16 @@ export const IconWarning = () => (
     <path d="M12 3.5 21 19.5H3zM12 9.5v4M12 16.5h.01" />
   </svg>
 );
+
+export const IconCopy = () => (
+  <svg {...base}>
+    <rect x="9" y="9" width="11" height="11" rx="2" />
+    <path d="M15 5.5A1.5 1.5 0 0 0 13.5 4H6a2 2 0 0 0-2 2v7.5A1.5 1.5 0 0 0 5.5 15" />
+  </svg>
+);
+
+export const IconCheck = () => (
+  <svg {...base}>
+    <path d="M4.5 12.5l5 5 10-11" />
+  </svg>
+);
