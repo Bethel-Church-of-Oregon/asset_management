@@ -85,11 +85,11 @@ export default function AssetFilters({
           ]}
         />
         <Select
-          label="사역원"
+          label="부서"
           value={params.get('dept') ?? ''}
           onChange={(value) => apply({ dept: value })}
           options={[
-            { value: '', label: '전체 사역원' },
+            { value: '', label: '전체 부서' },
             ...lookups.departments.map((d) => ({ value: d.code, label: `${d.code} · ${d.name}` })),
           ]}
         />

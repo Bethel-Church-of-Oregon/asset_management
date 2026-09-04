@@ -94,7 +94,7 @@ export default function MaintenanceForm({ assetId }: { assetId: number }) {
             id="performedBy"
             name="performedBy"
             className="field-input"
-            placeholder="예: 음향팀 이OO"
+            placeholder="예: 미디어팀 이OO"
             maxLength={120}
           />
         </div>

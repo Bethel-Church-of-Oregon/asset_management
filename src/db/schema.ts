@@ -46,7 +46,7 @@ export const buildings = pgTable('buildings', {
   isActive: boolean('is_active').notNull().default(true),
 });
 
-/** 관리 사역원 — supplies the DD segment of the asset number. */
+/** 관리부서 — supplies the DD segment of the asset number. */
 export const departments = pgTable('departments', {
   id: serial('id').primaryKey(),
   code: varchar('code', { length: 2 }).notNull().unique(),

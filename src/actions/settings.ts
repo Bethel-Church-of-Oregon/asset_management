@@ -77,7 +77,7 @@ export async function saveDepartmentAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  return upsertLookup(departments, formData, '사역원이');
+  return upsertLookup(departments, formData, '부서가');
 }
 
 /**

@@ -51,8 +51,8 @@ export default async function SettingsPage() {
             아래 &lsquo;건물 · 위치&rsquo;에서 관리
           </li>
           <li>
-            <span className="mono font-semibold text-slate-800">DD</span> 관리 사역원 번호 2자리 —
-            아래 &lsquo;관리 사역원&rsquo;에서 관리
+            <span className="mono font-semibold text-slate-800">DD</span> 관리부서 번호 2자리 —
+            아래 &lsquo;관리부서&rsquo;에서 관리
           </li>
           <li>
             <span className="mono font-semibold text-slate-800">SSSS</span> 물품 고유번호 4자리 —
@@ -69,13 +69,13 @@ export default async function SettingsPage() {
         <LookupManager
           kind="building"
           title="건물 · 위치"
-          description="자산번호 3번째 자리에 들어갑니다. 예) 1 비전, 2 은혜, 3 조이채플, 4 창고"
+          description="자산번호 3번째 자리에 들어갑니다. 예) 1 비전, 2 은혜, 3 은혜성전, 4 창고"
           rows={lookups.buildings}
         />
         <LookupManager
           kind="department"
-          title="관리 사역원"
-          description="자산번호 4번째 자리에 들어갑니다. 예) 1 예배부, 2 선교부"
+          title="관리부서"
+          description="자산번호 4번째 자리에 들어갑니다. 예) 1 예배사역원, 2 선교팀"
           rows={lookups.departments}
         />
       </div>

@@ -81,7 +81,7 @@ export default async function NewAssetPage({
 
       {noLookups ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          건물/위치 또는 사역원 기준정보가 없습니다. 먼저{' '}
+          건물/위치 또는 부서 기준정보가 없습니다. 먼저{' '}
           <Link href="/settings" className="font-semibold underline">
             설정
           </Link>

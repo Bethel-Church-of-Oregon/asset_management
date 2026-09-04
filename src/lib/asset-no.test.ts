@@ -239,7 +239,7 @@ test('Code Set C 가 규격 예시와 일치', () => {
 });
 
 test('every asset number in the scheme is Code128-encodable', () => {
-  // 건물·사역원 코드 격자를 고유번호 양 끝값에서 훑습니다.
+  // 건물·부서 코드 격자를 고유번호 양 끝값에서 훑습니다.
   for (const building of ['01', '09', '10', '42', '99']) {
     for (const dept of ['01', '09', '10', '42', '99']) {
       for (const seq of ['0001', '9999']) {

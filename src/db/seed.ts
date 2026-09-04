@@ -1,5 +1,5 @@
 /**
- * 최초 1회 실행: 기준정보(건물/사역원)와 관리자 계정을 만듭니다.
+ * 최초 1회 실행: 기준정보(건물/부서)와 관리자 계정을 만듭니다.
  *
  *   npm run db:push     # 테이블 생성
  *   npm run db:seed     # 기준정보 + 관리자 계정
@@ -22,13 +22,13 @@ import { USERNAME_RULE_TEXT, cleanUsername, isUsername, usernameFromEmail } from
 const DEFAULT_BUILDINGS = [
   { code: '01', name: '비전', sortOrder: 1 },
   { code: '02', name: '은혜', sortOrder: 2 },
-  { code: '03', name: '조이채플', sortOrder: 3 },
+  { code: '03', name: '은혜성전', sortOrder: 3 },
   { code: '04', name: '창고', sortOrder: 4 },
 ];
 
 const DEFAULT_DEPARTMENTS = [
-  { code: '01', name: '예배부', sortOrder: 1 },
-  { code: '02', name: '선교부', sortOrder: 2 },
+  { code: '01', name: '예배사역원', sortOrder: 1 },
+  { code: '02', name: '선교팀', sortOrder: 2 },
   { code: '03', name: '교육부', sortOrder: 3 },
   { code: '04', name: '행정부', sortOrder: 4 },
   { code: '05', name: '관리부', sortOrder: 5 },
@@ -42,9 +42,9 @@ const DEFAULT_DEPARTMENTS = [
 const SAMPLE_ASSETS = [
   {
     parts: { yearCode: '26', buildingCode: '01', deptCode: '03', seq: '0001' },
-    name: '유아방 TV (왼쪽)',
+    name: '유아부실 TV (왼쪽)',
     teamName: '교육부 유아부',
-    location: '비전관 2층 유아방',
+    location: '비전성전 유아부실',
     acquiredDate: '2026-03-14',
     acquiredPrice: '649.99',
     manufacturer: 'LG',
@@ -57,9 +57,9 @@ const SAMPLE_ASSETS = [
   },
   {
     parts: { yearCode: '26', buildingCode: '01', deptCode: '03', seq: '0002' },
-    name: '유아방 TV (오른쪽)',
+    name: '유아부실 TV (오른쪽)',
     teamName: '교육부 유아부',
-    location: '비전관 2층 유아방',
+    location: '비전성전 유아부실',
     acquiredDate: '2026-03-14',
     acquiredPrice: '649.99',
     manufacturer: 'LG',
@@ -72,8 +72,8 @@ const SAMPLE_ASSETS = [
   {
     parts: { yearCode: '26', buildingCode: '01', deptCode: '01', seq: '0001' },
     name: '본당 무선마이크 세트',
-    teamName: '예배부 음향팀',
-    location: '비전관 1층 본당 음향실',
+    teamName: '예배사역원 미디어팀',
+    location: '비전성전 1층 본당 미디어실',
     acquiredDate: '2026-01-20',
     acquiredPrice: '599.00',
     manufacturer: 'Shure',
@@ -86,9 +86,9 @@ const SAMPLE_ASSETS = [
   },
   {
     parts: { yearCode: '25', buildingCode: '03', deptCode: '02', seq: '0004' },
-    name: '선교부 노트북',
-    teamName: '선교부',
-    location: '조이채플 선교부 사무실',
+    name: '선교팀 노트북',
+    teamName: '선교팀',
+    location: '은혜성전 창고',
     acquiredDate: '2025-08-02',
     acquiredPrice: '1099.00',
     manufacturer: 'Dell',
@@ -105,7 +105,7 @@ const SAMPLE_ASSETS = [
     parts: { yearCode: '25', buildingCode: '02', deptCode: '03', seq: '0012' },
     name: '주일학교 책장',
     teamName: '교육부 초등부',
-    location: '은혜관 1층 3번 교실',
+    location: '은혜성전 1층 3번 교실',
     acquiredDate: '2025-09-06',
     acquiredPrice: '129.00',
     manufacturer: 'IKEA',
@@ -146,7 +146,7 @@ const SAMPLE_LOGS: Record<string, SampleLog[]> = {
       kind: 'inspection',
       performedOn: '2026-05-10',
       description: '정기 음향 점검 — 배터리 교체, 주파수 재설정',
-      performedBy: '음향팀 박OO',
+      performedBy: '미디어팀 박OO',
     },
     {
       kind: 'repair',
@@ -178,7 +178,7 @@ async function main() {
   const [{ count: deptCount }] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(departments);
-  console.log(`  건물 ${buildingCount}건 / 사역원 ${deptCount}건`);
+  console.log(`  건물 ${buildingCount}건 / 부서 ${deptCount}건`);
 
   const email = (process.env.SEED_ADMIN_EMAIL ?? '').trim().toLowerCase();
   // 로그인은 아이디로 합니다. SEED_ADMIN_USERNAME 이 없으면 예전 설정 파일도 그대로

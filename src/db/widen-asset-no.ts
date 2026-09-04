@@ -1,7 +1,7 @@
 /**
  * 자산번호 자리수 확장 — `npm run db:widen-asset-no`
  *
- * 예전 형식 `YY-BDSSS` (건물 1자리 · 사역원 1자리 · 고유번호 3자리) 로 만든
+ * 예전 형식 `YY-BDSSS` (건물 1자리 · 부서 1자리 · 고유번호 3자리) 로 만든
  * 데이터베이스를 새 형식 `YY-BBDD-SSSS` (2 · 2 · 4자리) 로 올립니다.
  *
  *   1. 칸 폭 넓히기 (varchar(1) → varchar(2), varchar(3) → varchar(4))
