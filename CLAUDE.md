@@ -81,9 +81,37 @@ CLI 스크립트(seed)는 `server-only` 가 없는 `src/db/client.ts` 를 쓴다
 | --- | --- | --- |
 | 금액(달러·센트) | `cleanMoneyInput` · `isMoneyAmount` (`src/lib/format.ts`) | `MoneyInput`, `actions/assets.ts` |
 | 날짜 유효성 | `isCalendarDate` (`src/lib/format.ts`) | `actions/assets.ts` |
-| 자산번호 | `src/lib/asset-no.ts` | 폼·스캔·쿼리 |
+| 자산번호 · 연도 목록 | `src/lib/asset-no.ts` | 폼·스캔·쿼리·라벨·시드·이관 |
 | 로그인 아이디 | `src/lib/username.ts` | `LoginForm`, `UserManager`, `actions/auth.ts`, `actions/settings.ts`, `db/seed.ts`, `db/add-username.ts`, `db/doctor.ts`, `db/set-password.ts` |
 | unique 위반 판정 | `src/lib/db-errors.ts` | `actions/assets.ts`, `actions/settings.ts` |
+
+## 자산번호 형식
+
+`YY-BBDD-SSSS` — 연도 2 · 건물 2 · 사역원 2 · 고유번호 4자리, 모두 0 으로 채운다.
+하이픈은 표기용이다(사람이 옮겨 적기 쉽도록 세 덩어리로 끊음).
+자리수를 고정해야 문자열 정렬이 번호 순서가 되고(`01` < `02` < `10`) "다음 번호"
+조회에 숫자 변환이 필요 없다. 규칙·예시 번호·연도 목록은 모두 `src/lib/asset-no.ts`
+(`EXAMPLE_ASSET_NO`, `ASSET_YEAR_MIN`, `assetYearOptions`) 에서 가져온다 —
+화면 문구에 `26-0103-0001` 을 직접 쓰지 않는다. 하이픈이 두 개이므로
+`assetNo.replace('-', '')` 는 하나만 지운다 — 숫자만 뽑을 때는 반드시
+`assetNoBarcodeValue` 나 `assetNoFragment` 를 쓴다.
+
+**바코드에는 하이픈을 뺀 숫자 10자리만 넣는다** (`assetNoBarcodeValue`). 숫자만이면
+Code 128 이 Code Set C 로 두 자리를 한 심볼에 담아 62mm 라벨에서 모듈 폭이
+0.32mm → 0.52mm 로 굵어진다. 하이픈을 그대로 인코딩하면 B 세트로 떨어져 예전
+7자리(0.399mm)보다 얇아지고 스캔이 잘 안 된다. 사람이 읽는 줄은 `Barcode` 의
+`text` prop 으로 따로 넘긴다.
+
+예전 형식(`YY-BDSSS`)에서 올리는 것은 `npm run db:widen-asset-no` 다. `drizzle-kit
+push` 는 칸 폭만 넓히고 값에 0 을 채우거나 `asset_no` 를 다시 만들지 못한다.
+`parseAssetNo` 는 7자리 입력도 받아 새 형식으로 올려 준다 — 예전 라벨 스캔용이다.
+
+## 시간대
+
+교회는 오레곤에 있다. "오늘"·"올해" 는 `src/lib/format.ts` 의 `APP_TIME_ZONE`
+(`America/Los_Angeles`) 기준이며 `today()` · `currentYear()` 로만 구한다.
+서버(Vercel)는 UTC 로 돌고, 예전에 쓰던 `Asia/Seoul` 은 오레곤보다 하루 앞서
+CSV 파일명·기본 날짜가 내일로 찍혔다.
 
 ## 로그인은 아이디로
 

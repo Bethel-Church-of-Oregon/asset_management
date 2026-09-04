@@ -6,8 +6,9 @@ import { createAssetAction, suggestSeqAction, updateAssetAction } from '@/action
 import { IDLE } from '@/actions/types';
 import type { Asset } from '@/db/schema';
 import type { Lookups } from '@/lib/queries';
+import { SEQ_DIGITS, SEQ_MAX, assetNoBarcodeValue, toSeq } from '@/lib/asset-no';
 import { STATUS_OPTIONS } from '@/lib/constants';
-import { todayInSeoul } from '@/lib/format';
+import { today } from '@/lib/format';
 import Barcode from './Barcode';
 import FormSection, { Field } from './FormSection';
 import { FormBanner } from './FormMessage';
@@ -64,7 +65,9 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
         setSeq(result.seq);
         setSeqNotice(null);
       } else {
-        setSeqNotice('이 조합의 번호(001~999)를 모두 사용했습니다. 다른 조합을 선택하세요.');
+        setSeqNotice(
+          `이 조합의 번호(${toSeq(1)}~${SEQ_MAX})를 모두 사용했습니다. 다른 조합을 선택하세요.`,
+        );
       }
     });
     return () => {
@@ -74,8 +77,11 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
   }, [yearCode, buildingCode, deptCode, autoSeq]);
 
   const assetNoPreview =
-    /^\d{2}$/.test(yearCode) && buildingCode && deptCode && /^\d{1,3}$/.test(seq)
-      ? `${yearCode}-${buildingCode}${deptCode}${seq.padStart(3, '0')}`
+    /^\d{2}$/.test(yearCode) &&
+    buildingCode &&
+    deptCode &&
+    new RegExp(`^\\d{1,${SEQ_DIGITS}}$`).test(seq)
+      ? `${yearCode}-${buildingCode}${deptCode}-${seq.padStart(SEQ_DIGITS, '0')}`
       : null;
 
   const errors = state.fieldErrors ?? {};
@@ -91,7 +97,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
         <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-3">
           <h2 className="text-sm font-bold text-slate-900">자산번호</h2>
           <p className="mt-0.5 text-xs text-slate-500">
-            연도 2자리 + 건물 1자리 + 사역원 1자리 + 고유번호 3자리
+            연도 2자리 + 건물 2자리 + 사역원 2자리 + 고유번호 4자리
           </p>
         </div>
 
@@ -174,17 +180,17 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
                 name="seq"
                 type="text"
                 inputMode="numeric"
-                maxLength={3}
+                maxLength={SEQ_DIGITS}
                 className="field-input mono text-center tracking-widest"
-                placeholder="001"
+                placeholder={toSeq(1)}
                 value={seq}
                 onChange={(e) => {
                   seqTouched.current = true;
-                  setSeq(e.target.value.replace(/[^\d]/g, '').slice(0, 3));
+                  setSeq(e.target.value.replace(/[^\d]/g, '').slice(0, SEQ_DIGITS));
                 }}
                 onBlur={(e) => {
                   const digits = e.target.value.replace(/[^\d]/g, '');
-                  if (digits) setSeq(digits.padStart(3, '0'));
+                  if (digits) setSeq(digits.padStart(SEQ_DIGITS, '0'));
                 }}
                 required
               />
@@ -200,7 +206,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
             </div>
             {assetNoPreview ? (
               <Barcode
-                value={assetNoPreview}
+                value={assetNoBarcodeValue(assetNoPreview)}
                 moduleWidth={1.6}
                 height={44}
                 fontSize={0}
@@ -280,7 +286,12 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
           </select>
         </Field>
 
-        <Field label="수량" htmlFor="quantity" error={errors.quantity} hint="세트 단위로 관리할 때 사용">
+        <Field
+          label="수량"
+          htmlFor="quantity"
+          error={errors.quantity}
+          hint="세트 단위로 관리할 때 사용"
+        >
           <input
             id="quantity"
             name="quantity"
@@ -410,7 +421,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
               name="disposedDate"
               type="date"
               className="field-input"
-              defaultValue={asset?.disposedDate ?? todayInSeoul()}
+              defaultValue={asset?.disposedDate ?? today()}
             />
           </Field>
 
@@ -464,10 +475,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
           </SubmitButton>
         ) : null}
 
-        <Link
-          href={asset ? `/assets/${asset.id}` : '/assets'}
-          className="btn-secondary ml-auto"
-        >
+        <Link href={asset ? `/assets/${asset.id}` : '/assets'} className="btn-secondary ml-auto">
           취소
         </Link>
       </div>

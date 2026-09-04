@@ -14,7 +14,7 @@ export const USERNAME_MAX = 30;
  * 소문자로 제한하는 이유: 대소문자를 섞어 받으면 `Admin` 과 `admin` 이 서로 다른
  * 계정이 되어 로그인 실패의 원인을 알기 어려워집니다. 입력은 `cleanUsername` 이
  * 소문자로 접어서 넘기므로 사용자는 아무렇게나 타이핑해도 됩니다.
- * 숫자로 시작하지 못하게 한 것은 자산번호(`26-11001`)와 눈으로 구분되게 하려는 것입니다.
+ * 숫자로 시작하지 못하게 한 것은 자산번호(`26-0103-0001`)와 눈으로 구분되게 하려는 것입니다.
  */
 export const USERNAME_PATTERN = new RegExp(
   `^[a-z][a-z0-9._-]{${USERNAME_MIN - 1},${USERNAME_MAX - 1}}$`,

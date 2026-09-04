@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { assetNoBarcodeValue } from '@/lib/asset-no';
 import Barcode from './Barcode';
 import { IconBack, IconPrinter } from './icons';
 import {
@@ -89,7 +90,11 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
     const copies = Math.min(20, Math.max(1, content.copies));
     const list: (LabelAsset | null)[] = [];
     if (layout.kind === 'sheet') {
-      for (let i = 0; i < Math.max(0, Math.min(settings.skipCells, sheetCapacity(layout) - 1)); i++) {
+      for (
+        let i = 0;
+        i < Math.max(0, Math.min(settings.skipCells, sheetCapacity(layout) - 1));
+        i++
+      ) {
         list.push(null);
       }
     }
@@ -178,7 +183,9 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
                 ))}
                 <option value="custom">직접 지정</option>
               </select>
-              <p className="field-hint">{activePreset?.note ?? '아래 값을 직접 조정한 상태입니다.'}</p>
+              <p className="field-hint">
+                {activePreset?.note ?? '아래 값을 직접 조정한 상태입니다.'}
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:col-span-2 lg:grid-cols-5">
@@ -347,19 +354,18 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
             <strong className="font-semibold">선택한 항목이 라벨 세로 폭을 넘습니다</strong> — 필요{' '}
             <span className="mono font-semibold">{fit.neededMm.toFixed(1)}mm</span> / 인쇄 영역{' '}
             <span className="mono font-semibold">{fit.availableMm.toFixed(1)}mm</span>. 이대로
-            출력하면 아래쪽이 잘립니다. 표시 항목을 줄이거나,{' '}
-            <strong>바코드 높이</strong> 또는 <strong>글자 크기 배율</strong>을 낮추세요.
+            출력하면 아래쪽이 잘립니다. 표시 항목을 줄이거나, <strong>바코드 높이</strong> 또는{' '}
+            <strong>글자 크기 배율</strong>을 낮추세요.
           </div>
         ) : null}
 
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">
           <strong className="font-semibold">인쇄 팁</strong> — 브라우저 인쇄 창에서
           <strong> 배율(Scale)은 100%</strong>, <strong>여백(Margins)은 없음</strong>,
-          <strong> 머리글·바닥글은 해제</strong>로 두세요. 라벨 프린터는 프린터 설정에서 용지
-          종류를 실제 라벨 규격(예: DK-11209)으로 먼저 지정해야 크기가 맞습니다.
-          라벨이 잘리거나 돌아서 나오면 드라이버의 <strong>용지 방향(가로/세로)</strong>을
-          위 가로·세로 값과 맞추세요. 첫 출력은 1~2장만 시험 인쇄해 스캐너로 읽히는지
-          확인하시길 권합니다.
+          <strong> 머리글·바닥글은 해제</strong>로 두세요. 라벨 프린터는 프린터 설정에서 용지 종류를
+          실제 라벨 규격(예: DK-11209)으로 먼저 지정해야 크기가 맞습니다. 라벨이 잘리거나 돌아서
+          나오면 드라이버의 <strong>용지 방향(가로/세로)</strong>을 위 가로·세로 값과 맞추세요. 첫
+          출력은 1~2장만 시험 인쇄해 스캐너로 읽히는지 확인하시길 권합니다.
         </div>
 
         <h2 className="text-sm font-bold text-slate-900">미리보기</h2>
@@ -446,7 +452,8 @@ function LabelCell({
 
       <div className="w-full" style={{ height: `${barcodeHeightMm}mm` }}>
         <Barcode
-          value={asset.assetNo}
+          value={assetNoBarcodeValue(asset.assetNo)}
+          text={asset.assetNo}
           moduleWidth={1}
           height={30}
           quietZone={BARCODE_QUIET_ZONE_MODULES}

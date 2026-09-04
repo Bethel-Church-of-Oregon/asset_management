@@ -6,7 +6,7 @@ import { IDLE } from '@/actions/types';
 import { FormBanner, FormError } from './FormMessage';
 import SubmitButton from './SubmitButton';
 import { IconTrash } from './icons';
-import { todayInSeoul } from '@/lib/format';
+import { today } from '@/lib/format';
 
 export default function DisposeForm({ assetId }: { assetId: number }) {
   const [open, setOpen] = useState(false);
@@ -44,7 +44,7 @@ export default function DisposeForm({ assetId }: { assetId: number }) {
             name="disposedDate"
             type="date"
             className="field-input"
-            defaultValue={todayInSeoul()}
+            defaultValue={today()}
             required
           />
           <FormError>{errors.disposedDate}</FormError>

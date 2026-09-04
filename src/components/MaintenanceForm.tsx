@@ -6,7 +6,7 @@ import { IDLE } from '@/actions/types';
 import { FormBanner, FormError } from './FormMessage';
 import MoneyInput from './MoneyInput';
 import SubmitButton from './SubmitButton';
-import { todayInSeoul } from '@/lib/format';
+import { today } from '@/lib/format';
 
 export default function MaintenanceForm({ assetId }: { assetId: number }) {
   const [state, action] = useActionState(addMaintenanceAction, IDLE);
@@ -44,7 +44,7 @@ export default function MaintenanceForm({ assetId }: { assetId: number }) {
             name="performedOn"
             type="date"
             className="field-input"
-            defaultValue={todayInSeoul()}
+            defaultValue={today()}
             required
           />
           <FormError>{errors.performedOn}</FormError>

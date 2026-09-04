@@ -3,7 +3,7 @@
  *
  *   npm run db:push     # 테이블 생성
  *   npm run db:seed     # 기준정보 + 관리자 계정
- *   npm run db:seed -- --sample   # 예시 자산 5건까지 함께 생성
+ *   npm run db:seed -- --sample   # 예시 자산 6건까지 함께 생성
  *
  * 여러 번 실행해도 안전합니다 (이미 있는 값은 건너뜁니다).
  */
@@ -19,97 +19,117 @@ import { buildAssetNo } from '../lib/asset-no';
 import { USERNAME_RULE_TEXT, cleanUsername, isUsername, usernameFromEmail } from '../lib/username';
 
 const DEFAULT_BUILDINGS = [
-  { code: '1', name: '비전', sortOrder: 1 },
-  { code: '2', name: '은혜', sortOrder: 2 },
-  { code: '3', name: '조이채플', sortOrder: 3 },
-  { code: '4', name: '창고', sortOrder: 4 },
+  { code: '01', name: '비전', sortOrder: 1 },
+  { code: '02', name: '은혜', sortOrder: 2 },
+  { code: '03', name: '조이채플', sortOrder: 3 },
+  { code: '04', name: '창고', sortOrder: 4 },
 ];
 
 const DEFAULT_DEPARTMENTS = [
-  { code: '1', name: '예배부', sortOrder: 1 },
-  { code: '2', name: '선교부', sortOrder: 2 },
-  { code: '3', name: '교육부', sortOrder: 3 },
-  { code: '4', name: '행정부', sortOrder: 4 },
-  { code: '5', name: '관리부', sortOrder: 5 },
+  { code: '01', name: '예배부', sortOrder: 1 },
+  { code: '02', name: '선교부', sortOrder: 2 },
+  { code: '03', name: '교육부', sortOrder: 3 },
+  { code: '04', name: '행정부', sortOrder: 4 },
+  { code: '05', name: '관리부', sortOrder: 5 },
 ];
 
+/**
+ * 예시 자산 — 화면을 처음 볼 때 감을 잡기 위한 데이터입니다.
+ * 오레곤 현지 기준으로 구입처(Best Buy · Costco · IKEA · Sweetwater)와
+ * 미국 판매 모델명·달러 가격을 씁니다.
+ */
 const SAMPLE_ASSETS = [
   {
-    parts: { yearCode: '26', buildingCode: '1', deptCode: '3', seq: '001' },
+    parts: { yearCode: '26', buildingCode: '01', deptCode: '03', seq: '0001' },
     name: '유아방 TV (왼쪽)',
     teamName: '교육부 유아부',
     location: '비전관 2층 유아방',
     acquiredDate: '2026-03-14',
-    acquiredPrice: '649.00',
-    manufacturer: 'LG전자',
-    modelName: '65UR8050',
-    serialNo: 'SN-LG-4471082',
-    spec: '65인치 4K UHD 벽걸이',
-    vendor: '하이마트 강남점',
+    acquiredPrice: '649.99',
+    manufacturer: 'LG',
+    modelName: '65UQ7570PUJ',
+    serialNo: '303MXNP4K721',
+    spec: '65" 4K UHD, 벽걸이 설치',
+    vendor: 'Best Buy (Jantzen Beach)',
     status: 'in_use' as const,
     notes: '벽걸이 브라켓 포함',
   },
   {
-    parts: { yearCode: '26', buildingCode: '1', deptCode: '3', seq: '002' },
+    parts: { yearCode: '26', buildingCode: '01', deptCode: '03', seq: '0002' },
     name: '유아방 TV (오른쪽)',
     teamName: '교육부 유아부',
     location: '비전관 2층 유아방',
     acquiredDate: '2026-03-14',
-    acquiredPrice: '649.00',
-    manufacturer: 'LG전자',
-    modelName: '65UR8050',
-    serialNo: 'SN-LG-4471083',
-    spec: '65인치 4K UHD 벽걸이',
-    vendor: '하이마트 강남점',
+    acquiredPrice: '649.99',
+    manufacturer: 'LG',
+    modelName: '65UQ7570PUJ',
+    serialNo: '303MXNP4K722',
+    spec: '65" 4K UHD, 벽걸이 설치',
+    vendor: 'Best Buy (Jantzen Beach)',
     status: 'in_use' as const,
   },
   {
-    parts: { yearCode: '26', buildingCode: '1', deptCode: '1', seq: '001' },
+    parts: { yearCode: '26', buildingCode: '01', deptCode: '01', seq: '0001' },
     name: '본당 무선마이크 세트',
     teamName: '예배부 음향팀',
     location: '비전관 1층 본당 음향실',
     acquiredDate: '2026-01-20',
-    acquiredPrice: '1249.00',
+    acquiredPrice: '599.00',
     manufacturer: 'Shure',
     modelName: 'BLX288/PG58',
     serialNo: 'SHR-882140',
-    spec: '2채널 핸드헬드 무선 시스템',
-    vendor: '사운드코리아',
+    spec: '2채널 핸드헬드 무선 시스템 (H11 대역)',
+    vendor: 'Sweetwater',
     status: 'repair' as const,
     notes: '2번 채널 잡음 발생',
   },
   {
-    parts: { yearCode: '25', buildingCode: '3', deptCode: '2', seq: '004' },
+    parts: { yearCode: '25', buildingCode: '03', deptCode: '02', seq: '0004' },
     name: '선교부 노트북',
     teamName: '선교부',
     location: '조이채플 선교부 사무실',
     acquiredDate: '2025-08-02',
     acquiredPrice: '1099.00',
-    manufacturer: 'Samsung',
-    modelName: 'NT750XGR',
-    serialNo: 'SEC-KR-99120',
-    spec: '15.6" / i7 / 16GB / 512GB',
-    vendor: '삼성전자 공식몰',
+    manufacturer: 'Dell',
+    modelName: 'Inspiron 15 3520',
+    serialNo: 'DELL-7GQ2XN3',
+    spec: '15.6" / i7 / 16GB / 512GB SSD',
+    vendor: 'Costco (Tigard)',
     status: 'in_use' as const,
-    donor: '김OO 성도',
+    donor: '이OO 집사',
     warrantyUntil: '2028-08-01',
-    notes: '기증품. 선교 보고 편집 전용',
+    notes: '기증품. 선교 보고 영상 편집 전용',
   },
   {
-    parts: { yearCode: '24', buildingCode: '4', deptCode: '5', seq: '011' },
+    parts: { yearCode: '25', buildingCode: '02', deptCode: '03', seq: '0012' },
+    name: '주일학교 책장',
+    teamName: '교육부 초등부',
+    location: '은혜관 1층 3번 교실',
+    acquiredDate: '2025-09-06',
+    acquiredPrice: '129.00',
+    manufacturer: 'IKEA',
+    modelName: 'BILLY',
+    spec: '31 1/2" x 79 1/2" 화이트, 2개 중 1개',
+    vendor: 'IKEA (Portland)',
+    status: 'in_use' as const,
+    quantity: 2,
+    notes: '벽 고정 앵커 설치 완료',
+  },
+  {
+    parts: { yearCode: '24', buildingCode: '04', deptCode: '05', seq: '0011' },
     name: '접이식 테이블 (구형)',
     teamName: '관리부',
     location: '창고 B-3 선반',
     acquiredDate: '2024-05-11',
-    acquiredPrice: '79.00',
-    manufacturer: '대성퍼니처',
-    modelName: 'DT-1800',
-    spec: '1800x600 접이식',
-    vendor: '지역 가구상',
+    acquiredPrice: '79.99',
+    manufacturer: 'Lifetime',
+    modelName: '80387',
+    spec: '6 ft (72" x 30") 접이식, 화이트',
+    vendor: 'Costco (Tigard)',
     status: 'disposed' as const,
     disposedDate: '2026-06-30',
     disposalReason: '노후/파손',
-    disposalNote: '천판 균열로 폐기. 고물상 수거 완료.',
+    disposalNote: '천판 균열로 폐기. Metro 재활용 센터 반납 완료.',
   },
 ];
 
@@ -180,14 +200,14 @@ async function main() {
         .returning({ id: assets.id, assetNo: assets.assetNo });
       if (inserted.length > 0) {
         created++;
-        if (inserted[0].assetNo === '26-11001') {
+        if (inserted[0].assetNo === '26-0101-0001') {
           await db.insert(maintenanceLogs).values([
             {
               assetId: inserted[0].id,
               kind: 'inspection',
               performedOn: '2026-05-10',
               description: '정기 음향 점검 — 배터리 교체, 주파수 재설정',
-              performedBy: '음향팀 이OO',
+              performedBy: '음향팀 박OO',
             },
             {
               assetId: inserted[0].id,
@@ -195,7 +215,7 @@ async function main() {
               performedOn: '2026-07-22',
               description: '2번 채널 리시버 잡음 — 안테나 커넥터 교체',
               cost: '145.00',
-              vendor: '사운드코리아 A/S',
+              vendor: 'Sweetwater Service',
               performedBy: '외부 업체',
             },
           ]);

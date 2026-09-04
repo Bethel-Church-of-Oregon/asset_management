@@ -5,6 +5,7 @@ import UserManager from '@/components/UserManager';
 import { requireSession } from '@/lib/auth';
 import { canAdmin } from '@/lib/session';
 import { getLookupsWithUsage, listUsers } from '@/lib/queries';
+import { EXAMPLE_ASSET_NO } from '@/lib/asset-no';
 
 export const metadata: Metadata = { title: '설정' };
 
@@ -39,23 +40,27 @@ export default async function SettingsPage() {
       <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm">
         <p className="font-semibold text-slate-800">자산번호 구성</p>
         <p className="mono mt-1.5 text-lg font-bold tracking-wider text-brand-700">
-          YY - B D SSS
+          YY - BBDD - SSSS
         </p>
         <ul className="mt-2 space-y-0.5 text-xs text-slate-600">
           <li>
             <span className="mono font-semibold text-slate-800">YY</span> 취득 연도 2자리
           </li>
           <li>
-            <span className="mono font-semibold text-slate-800">B</span> 건물/위치 번호 — 아래
-            &lsquo;건물 · 위치&rsquo;에서 관리
+            <span className="mono font-semibold text-slate-800">BB</span> 건물/위치 번호 2자리 —
+            아래 &lsquo;건물 · 위치&rsquo;에서 관리
           </li>
           <li>
-            <span className="mono font-semibold text-slate-800">D</span> 관리 사역원 번호 — 아래
-            &lsquo;관리 사역원&rsquo;에서 관리
+            <span className="mono font-semibold text-slate-800">DD</span> 관리 사역원 번호 2자리 —
+            아래 &lsquo;관리 사역원&rsquo;에서 관리
           </li>
           <li>
-            <span className="mono font-semibold text-slate-800">SSS</span> 물품 고유번호 3자리 —
+            <span className="mono font-semibold text-slate-800">SSSS</span> 물품 고유번호 4자리 —
             등록 시 자동 부여
+          </li>
+          <li className="pt-1 text-slate-500">
+            모든 자리는 0 으로 채웁니다 — 예){' '}
+            <span className="mono text-slate-700">{EXAMPLE_ASSET_NO}</span>
           </li>
         </ul>
       </div>

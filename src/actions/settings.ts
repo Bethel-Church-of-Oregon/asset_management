@@ -7,16 +7,19 @@ import { db } from '@/db';
 import { USER_ROLES, assets, buildings, departments, users } from '@/db/schema';
 import { hashPassword, requireAdmin } from '@/lib/auth';
 import { isUniqueViolation, uniqueViolationConstraint } from '@/lib/db-errors';
+import { toCode } from '@/lib/asset-no';
 import { USERNAME_RULE_TEXT, cleanUsername, isUsername } from '@/lib/username';
 import { type FormState, readField, toErrorMessage, zodToFieldErrors } from './types';
 
 const lookupSchema = z.object({
   id: z.coerce.number().int().positive().optional(),
+  // 자산번호에 그대로 들어가므로 2자리 숫자로 고정하고 0 을 채웁니다 ('1' → '01').
   code: z
     .string()
     .trim()
-    .toUpperCase()
-    .regex(/^[0-9A-Z]$/, '코드는 숫자 또는 영문 대문자 1자리입니다.'),
+    .regex(/^\d{1,2}$/, '코드는 1~99 사이 숫자입니다.')
+    .transform(toCode)
+    .refine((v) => Number(v) > 0, '코드는 01부터 시작합니다.'),
   name: z.string().trim().min(1, '이름을 입력하세요.').max(100),
   sortOrder: z
     .string()

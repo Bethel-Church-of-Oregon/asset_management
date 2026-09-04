@@ -8,9 +8,9 @@ import { db } from '@/db';
 import { isUniqueViolation } from '@/lib/db-errors';
 import { ASSET_STATUSES, MAINTENANCE_KINDS, assets, maintenanceLogs } from '@/db/schema';
 import { requireEditor } from '@/lib/auth';
-import { buildAssetNo } from '@/lib/asset-no';
+import { SEQ_DIGITS, SEQ_MAX, buildAssetNo } from '@/lib/asset-no';
 import { getNextSeq } from '@/lib/queries';
-import { cleanMoneyInput, isCalendarDate, isMoneyAmount, todayInSeoul } from '@/lib/format';
+import { cleanMoneyInput, isCalendarDate, isMoneyAmount, today } from '@/lib/format';
 import { type FormState, toErrorMessage, zodToFieldErrors } from './types';
 
 /** Trims, then converts '' to null so empty inputs clear the column. */
@@ -32,33 +32,38 @@ const optionalDate = z
   .optional()
   .transform((v) => v ?? null);
 
-const requiredDate = (message: string) =>
-  z.string().trim().refine(isCalendarDate, message);
+const requiredDate = (message: string) => z.string().trim().refine(isCalendarDate, message);
 
 /** "$1,234.5" → "1234.5". 판정 규칙은 `@/lib/format` 과 공유합니다. */
 const optionalMoney = z
   .string()
   .trim()
   .transform(cleanMoneyInput)
-  .refine(
-    (v) => v === '' || isMoneyAmount(v),
-    '금액은 숫자로, 소수점 둘째 자리까지 입력하세요.',
-  )
+  .refine((v) => v === '' || isMoneyAmount(v), '금액은 숫자로, 소수점 둘째 자리까지 입력하세요.')
   .transform((v) => (v === '' ? null : v))
   .optional()
   .transform((v) => v ?? null);
 
 const assetSchema = z.object({
   name: z.string().trim().min(1, '자산명을 입력하세요.').max(200, '200자 이내로 입력하세요.'),
-  yearCode: z.string().trim().regex(/^\d{2}$/, '취득연도를 선택하세요.'),
-  buildingCode: z.string().trim().regex(/^[0-9A-Z]$/, '건물/위치를 선택하세요.'),
-  deptCode: z.string().trim().regex(/^[0-9A-Z]$/, '관리 사역원을 선택하세요.'),
+  yearCode: z
+    .string()
+    .trim()
+    .regex(/^\d{2}$/, '취득연도를 선택하세요.'),
+  buildingCode: z
+    .string()
+    .trim()
+    .regex(/^\d{2}$/, '건물/위치를 선택하세요.'),
+  deptCode: z
+    .string()
+    .trim()
+    .regex(/^\d{2}$/, '관리 사역원을 선택하세요.'),
   seq: z
     .string()
     .trim()
-    .regex(/^\d{1,3}$/, '고유번호는 1~999 사이 숫자입니다.')
-    .transform((v) => v.padStart(3, '0'))
-    .refine((v) => v !== '000', '고유번호는 001부터 시작합니다.'),
+    .regex(new RegExp(`^\\d{1,${SEQ_DIGITS}}$`), `고유번호는 1~${SEQ_MAX} 사이 숫자입니다.`)
+    .transform((v) => v.padStart(SEQ_DIGITS, '0'))
+    .refine((v) => Number(v) > 0, '고유번호는 0001부터 시작합니다.'),
   teamName: optionalText(100),
   location: optionalText(200),
   acquiredDate: optionalDate,
@@ -114,7 +119,7 @@ function readAssetForm(formData: FormData) {
 function reconcileDisposal(data: z.infer<typeof assetSchema>) {
   if (data.status === 'disposed') {
     return {
-      disposedDate: data.disposedDate ?? todayInSeoul(),
+      disposedDate: data.disposedDate ?? today(),
       disposalReason: data.disposalReason,
       disposalNote: data.disposalNote,
     };
@@ -402,7 +407,11 @@ export async function suggestSeqAction(
   deptCode: string,
 ): Promise<{ seq: string | null }> {
   await requireEditor();
-  if (!/^\d{2}$/.test(yearCode) || !/^[0-9A-Z]$/.test(buildingCode) || !/^[0-9A-Z]$/.test(deptCode)) {
+  if (
+    !/^\d{2}$/.test(yearCode) ||
+    !/^[0-9A-Z]$/.test(buildingCode) ||
+    !/^[0-9A-Z]$/.test(deptCode)
+  ) {
     return { seq: null };
   }
   const next = await getNextSeq(yearCode, buildingCode, deptCode);

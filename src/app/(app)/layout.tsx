@@ -10,6 +10,7 @@ import {
   IconSettings,
 } from '@/components/icons';
 import { APP_SHORT_NAME, ORG_NAME } from '@/lib/app-info';
+import { EXAMPLE_ASSET_NO } from '@/lib/asset-no';
 import { requireSession } from '@/lib/auth';
 import { ROLE_LABELS, canAdmin, canEdit } from '@/lib/session';
 
@@ -81,8 +82,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
 
       <footer className="no-print mx-auto max-w-7xl px-4 pb-10 text-xs text-slate-400 sm:px-6">
-        자산번호 형식: <span className="mono">YY-BDSSS</span> · 연도(2) · 건물(1) · 사역원(1) ·
-        고유번호(3)
+        자산번호 형식: <span className="mono">YY-BBDD-SSSS</span> · 연도(2) · 건물(2) · 사역원(2) ·
+        고유번호(4) · 예) <span className="mono">{EXAMPLE_ASSET_NO}</span>
       </footer>
     </div>
   );

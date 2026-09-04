@@ -8,6 +8,7 @@ import {
   saveDepartmentAction,
 } from '@/actions/settings';
 import { IDLE } from '@/actions/types';
+import { CODE_DIGITS } from '@/lib/asset-no';
 import ConfirmSubmit from './ConfirmSubmit';
 import SubmitButton from './SubmitButton';
 import { FormBanner, FormError } from './FormMessage';
@@ -82,14 +83,17 @@ function LookupRow({
   const [removeState, removeAction] = useActionState(remove, IDLE);
 
   return (
-    <div className={`rounded-lg border p-2 ${row.isActive ? 'border-slate-200' : 'border-slate-200 bg-slate-50'}`}>
+    <div
+      className={`rounded-lg border p-2 ${row.isActive ? 'border-slate-200' : 'border-slate-200 bg-slate-50'}`}
+    >
       <div className="grid gap-2 sm:grid-cols-[3.5rem_1fr_4.5rem_5rem_auto] sm:items-center">
         <form action={saveAction} className="contents">
           <input type="hidden" name="id" value={row.id} />
           <input
             name="code"
             defaultValue={row.code}
-            maxLength={1}
+            maxLength={CODE_DIGITS}
+            inputMode="numeric"
             className="field-input mono !py-1.5 text-center"
             aria-label="코드"
             required
@@ -175,8 +179,9 @@ function AddLookupRow({ save }: { save: ActionFn }) {
         <div>
           <input
             name="code"
-            maxLength={1}
-            placeholder="5"
+            maxLength={CODE_DIGITS}
+            inputMode="numeric"
+            placeholder="06"
             className="field-input mono !py-1.5 text-center"
             aria-label="코드"
             required

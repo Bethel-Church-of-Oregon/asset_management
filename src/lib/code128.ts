@@ -5,32 +5,143 @@
  * without any client-side JavaScript — label printing must never depend on
  * hydration finishing.
  *
- * Uses Code Set B for the whole payload (asset numbers are ASCII digits and
- * hyphens, so the extra density of Code Set C is not worth the switching
- * logic).
+ * 숫자만으로 된 짝수 길이 payload 는 Code Set C 로, 그 밖에는 Code Set B 로
+ * 인코딩합니다. Code Set C 는 두 자리를 한 심볼에 담아 같은 라벨 폭에서 막대가
+ * 두 배 가까이 굵어집니다 — 자산번호 10자리(`2601030001`)는 B 로 하면 176모듈,
+ * C 로 하면 110모듈이고, 62mm 라벨에서 모듈 폭이 0.32mm → 0.52mm 가 됩니다.
+ * 스캔 성공률이 여기서 갈리므로 C 를 씁니다.
+ *
+ * 세트를 중간에 섞지는 않습니다(B↔C 전환 문자를 쓰지 않음). 자산번호에서
+ * 하이픈을 뺀 값만 인코딩하면 전환이 필요 없고, 사람이 읽는 줄에는
+ * 하이픈이 들어간 번호를 따로 그려 주기 때문입니다.
  */
 
 // Bar/space width patterns for values 0..106. Each digit is a module count,
 // alternating bar, space, bar, ... starting with a bar.
-const PATTERNS = [
-  '212222', '222122', '222221', '121223', '121322', '131222', '122213', '122312',
-  '132212', '221213', '221312', '231212', '112232', '122132', '122231', '113222',
-  '123122', '123221', '223211', '221132', '221231', '213212', '223112', '312131',
-  '311222', '321122', '321221', '312212', '322112', '322211', '212123', '212321',
-  '232121', '111323', '131123', '131321', '112313', '132113', '132311', '211313',
-  '231113', '231311', '112133', '112331', '132131', '113123', '113321', '133121',
-  '313121', '211331', '231131', '213113', '213311', '213131', '311123', '311321',
-  '331121', '312113', '312311', '332111', '314111', '221411', '431111', '111224',
-  '111422', '121124', '121421', '141122', '141221', '112214', '112412', '122114',
-  '122411', '142112', '142211', '241211', '221114', '413111', '241112', '134111',
-  '111242', '121142', '121241', '114212', '124112', '124211', '411212', '421112',
-  '421211', '212141', '214121', '412121', '111143', '111341', '131141', '114113',
-  '114311', '411113', '411311', '113141', '114131', '311141', '411131', '211412',
-  '211214', '211232', '2331112',
+// export 인 이유: 단위 테스트가 이 표로 디코더를 만들어 인코딩 결과를 되읽습니다.
+export const PATTERNS = [
+  '212222',
+  '222122',
+  '222221',
+  '121223',
+  '121322',
+  '131222',
+  '122213',
+  '122312',
+  '132212',
+  '221213',
+  '221312',
+  '231212',
+  '112232',
+  '122132',
+  '122231',
+  '113222',
+  '123122',
+  '123221',
+  '223211',
+  '221132',
+  '221231',
+  '213212',
+  '223112',
+  '312131',
+  '311222',
+  '321122',
+  '321221',
+  '312212',
+  '322112',
+  '322211',
+  '212123',
+  '212321',
+  '232121',
+  '111323',
+  '131123',
+  '131321',
+  '112313',
+  '132113',
+  '132311',
+  '211313',
+  '231113',
+  '231311',
+  '112133',
+  '112331',
+  '132131',
+  '113123',
+  '113321',
+  '133121',
+  '313121',
+  '211331',
+  '231131',
+  '213113',
+  '213311',
+  '213131',
+  '311123',
+  '311321',
+  '331121',
+  '312113',
+  '312311',
+  '332111',
+  '314111',
+  '221411',
+  '431111',
+  '111224',
+  '111422',
+  '121124',
+  '121421',
+  '141122',
+  '141221',
+  '112214',
+  '112412',
+  '122114',
+  '122411',
+  '142112',
+  '142211',
+  '241211',
+  '221114',
+  '413111',
+  '241112',
+  '134111',
+  '111242',
+  '121142',
+  '121241',
+  '114212',
+  '124112',
+  '124211',
+  '411212',
+  '421112',
+  '421211',
+  '212141',
+  '214121',
+  '412121',
+  '111143',
+  '111341',
+  '131141',
+  '114113',
+  '114311',
+  '411113',
+  '411311',
+  '113141',
+  '114131',
+  '311141',
+  '411131',
+  '211412',
+  '211214',
+  '211232',
+  '2331112',
 ];
 
 const START_B = 104;
+const START_C = 105;
 const STOP = 106;
+
+/**
+ * Code Set C 로 인코딩할 수 있는 payload — 숫자만, 짝수 길이.
+ *
+ * 홀수 길이는 한 자리를 B 로 넣고 전환하는 처리가 필요해 지원하지 않습니다.
+ * 자산번호는 항상 10자리라 해당되지 않습니다.
+ */
+function isCodeCPayload(text: string): boolean {
+  return text.length >= 2 && text.length % 2 === 0 && /^\d+$/.test(text);
+}
 
 /** True when every character can be represented in Code Set B (ASCII 32-126). */
 export function isEncodable(text: string): boolean {
@@ -39,6 +150,11 @@ export function isEncodable(text: string): boolean {
     if (code < 32 || code > 126) return false;
   }
   return text.length > 0;
+}
+
+/** 이 payload 가 어느 코드 세트로 인코딩되는지 — 밀도 계산·테스트용. */
+export function codeSetFor(text: string): 'B' | 'C' {
+  return isCodeCPayload(text) ? 'C' : 'B';
 }
 
 /**
@@ -50,12 +166,19 @@ export function encodeToModules(text: string): string {
     throw new Error(`Code128: cannot encode ${JSON.stringify(text)}`);
   }
 
-  const values: number[] = [START_B];
-  for (const ch of text) values.push(ch.charCodeAt(0) - 32);
+  const values: number[] = [];
+  if (isCodeCPayload(text)) {
+    values.push(START_C);
+    // Code Set C: 값 하나가 두 자리 숫자입니다 ("26" → 26).
+    for (let i = 0; i < text.length; i += 2) values.push(Number(text.slice(i, i + 2)));
+  } else {
+    values.push(START_B);
+    for (const ch of text) values.push(ch.charCodeAt(0) - 32);
+  }
 
   // Checksum: start value plus each payload value weighted by its 1-based
   // position, modulo 103.
-  let sum = START_B;
+  let sum = values[0];
   for (let i = 1; i < values.length; i++) sum += values[i] * i;
   values.push(sum % 103);
   values.push(STOP);
@@ -161,11 +284,16 @@ export function barcodeSvgString(text: string, options: BarcodeSvgOptions = {}):
 function escapeXml(value: string): string {
   return value.replace(/[<>&"']/g, (ch) => {
     switch (ch) {
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '&': return '&amp;';
-      case '"': return '&quot;';
-      default: return '&apos;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '&':
+        return '&amp;';
+      case '"':
+        return '&quot;';
+      default:
+        return '&apos;';
     }
   });
 }

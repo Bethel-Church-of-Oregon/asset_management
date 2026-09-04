@@ -11,8 +11,9 @@ import {
   users,
   type AssetStatus,
 } from '@/db/schema';
-import { assetNoFragment, normalizeAssetNo, toYearCode } from './asset-no';
+import { SEQ_MAX, assetNoFragment, normalizeAssetNo, toYearCode } from './asset-no';
 import { PAGE_SIZE } from './constants';
+import { currentYear } from './format';
 
 export type Lookups = {
   buildings: { id: number; code: string; name: string; isActive: boolean }[];
@@ -311,8 +312,8 @@ export async function getAssetsByIds(ids: number[]) {
 }
 
 /**
- * Next free 3-digit sequence for a `YY-BD` prefix. Returns `null` when all 999
- * slots are taken.
+ * Next free sequence number for a `YY-BBDD` prefix. Returns `null` when every
+ * slot up to SEQ_MAX is taken.
  */
 export async function getNextSeq(
   yearCode: string,
@@ -330,18 +331,11 @@ export async function getNextSeq(
       ),
     );
   const next = (row?.max ?? 0) + 1;
-  return next > 999 ? null : next;
+  return next > SEQ_MAX ? null : next;
 }
 
 export async function getDashboardStats() {
-  const currentYear = toYearCode(
-    Number(
-      new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Seoul',
-        year: 'numeric',
-      }).format(new Date()),
-    ),
-  );
+  const thisYearCode = toYearCode(currentYear());
 
   const [byStatus, totals, byBuilding, recent, upcomingWarranty, recentLogs] = await Promise.all([
     db
@@ -352,7 +346,7 @@ export async function getDashboardStats() {
       .select({
         count: sql<number>`count(*)::int`,
         value: sql<string>`coalesce(sum(${assets.acquiredPrice}), 0)::text`,
-        thisYear: sql<number>`count(*) filter (where ${assets.yearCode} = ${currentYear})::int`,
+        thisYear: sql<number>`count(*) filter (where ${assets.yearCode} = ${thisYearCode})::int`,
       })
       .from(assets),
     db

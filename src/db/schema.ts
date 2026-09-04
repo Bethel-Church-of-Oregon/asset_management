@@ -36,19 +36,20 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-/** 건물/위치 — supplies the 3rd digit of the asset number. */
+/** 건물/위치 — supplies the BB segment of the asset number. */
 export const buildings = pgTable('buildings', {
   id: serial('id').primaryKey(),
-  code: varchar('code', { length: 1 }).notNull().unique(),
+  // 2자리 숫자, 0 으로 채움 ('01'). 자리수를 고정해야 문자열 정렬이 번호 순서가 됩니다.
+  code: varchar('code', { length: 2 }).notNull().unique(),
   name: varchar('name', { length: 100 }).notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: boolean('is_active').notNull().default(true),
 });
 
-/** 관리 사역원 — supplies the 4th digit of the asset number. */
+/** 관리 사역원 — supplies the DD segment of the asset number. */
 export const departments = pgTable('departments', {
   id: serial('id').primaryKey(),
-  code: varchar('code', { length: 1 }).notNull().unique(),
+  code: varchar('code', { length: 2 }).notNull().unique(),
   name: varchar('name', { length: 100 }).notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: boolean('is_active').notNull().default(true),
@@ -59,13 +60,14 @@ export const assets = pgTable(
   {
     id: serial('id').primaryKey(),
 
-    // 자산번호: YY-BDSSS (e.g. 26-11001). Stored whole for lookups, and split
-    // into parts so filtering and sorting by building/department stay cheap.
+    // 자산번호: YY-BBDD-SSSS (e.g. 26-0103-0001). Stored whole for lookups, and
+    // split into parts so filtering and sorting by building/department stay
+    // cheap. 규칙은 `src/lib/asset-no.ts` 한 곳에 있습니다.
     assetNo: varchar('asset_no', { length: 16 }).notNull(),
     yearCode: varchar('year_code', { length: 2 }).notNull(),
-    buildingCode: varchar('building_code', { length: 1 }).notNull(),
-    deptCode: varchar('dept_code', { length: 1 }).notNull(),
-    seq: varchar('seq', { length: 3 }).notNull(),
+    buildingCode: varchar('building_code', { length: 2 }).notNull(),
+    deptCode: varchar('dept_code', { length: 2 }).notNull(),
+    seq: varchar('seq', { length: 4 }).notNull(),
 
     name: varchar('name', { length: 200 }).notNull(),
     teamName: varchar('team_name', { length: 100 }),

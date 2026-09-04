@@ -1,7 +1,15 @@
 import { layoutBarcode, type BarcodeSvgOptions } from '@/lib/code128';
 
 type Props = BarcodeSvgOptions & {
+  /** 바코드로 인코딩할 값. 숫자만이면 Code Set C 로 굵게 그려집니다. */
   value: string;
+  /**
+   * 사람이 읽는 줄에 그릴 문자열. 기본값은 `value` 입니다.
+   *
+   * 자산번호는 하이픈을 뺀 숫자만 인코딩하고(밀도) 표기는 하이픈을 넣어
+   * 보여주기 때문에 둘이 다릅니다.
+   */
+  text?: string;
   /** CSS width for the rendered <svg>; the viewBox handles scaling. */
   cssWidth?: string;
   cssHeight?: string;
@@ -25,6 +33,7 @@ type Props = BarcodeSvgOptions & {
  */
 export default function Barcode({
   value,
+  text,
   moduleWidth = 2,
   height = 60,
   quietZone = 10,
@@ -39,9 +48,7 @@ export default function Barcode({
   try {
     layout = layoutBarcode(value, { moduleWidth, height, quietZone, showText, fontSize });
   } catch {
-    return (
-      <span className="text-xs text-red-600">바코드로 변환할 수 없는 값입니다: {value}</span>
-    );
+    return <span className="text-xs text-red-600">바코드로 변환할 수 없는 값입니다: {value}</span>;
   }
 
   return (
@@ -52,7 +59,7 @@ export default function Barcode({
       height={cssHeight}
       preserveAspectRatio={stretch ? 'none' : 'xMidYMid meet'}
       role="img"
-      aria-label={`바코드 ${value}`}
+      aria-label={`바코드 ${text ?? value}`}
       shapeRendering="crispEdges"
     >
       <rect x="0" y="0" width={layout.width} height={layout.height} fill="#ffffff" />
@@ -72,7 +79,7 @@ export default function Barcode({
           letterSpacing={fontSize * 0.08}
           fill="#000000"
         >
-          {value}
+          {text ?? value}
         </text>
       ) : null}
     </svg>

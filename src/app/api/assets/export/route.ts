@@ -2,7 +2,7 @@ import { type NextRequest } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { listAssetsForExport } from '@/lib/queries';
 import { STATUS_LABELS } from '@/lib/constants';
-import { todayInSeoul } from '@/lib/format';
+import { today } from '@/lib/format';
 
 const COLUMNS: { key: string; header: string }[] = [
   { key: 'assetNo', header: '자산번호' },
@@ -66,12 +66,12 @@ export async function GET(request: NextRequest) {
 
   // Excel(한글 Windows)에서 UTF-8 을 제대로 읽도록 BOM 을 붙입니다.
   const body = `﻿${lines.join('\r\n')}\r\n`;
-  const filename = `자산대장_${todayInSeoul()}.csv`;
+  const filename = `자산대장_${today()}.csv`;
 
   return new Response(body, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="assets-${todayInSeoul()}.csv"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+      'Content-Disposition': `attachment; filename="assets-${today()}.csv"; filename*=UTF-8''${encodeURIComponent(filename)}`,
       'Cache-Control': 'no-store',
     },
   });

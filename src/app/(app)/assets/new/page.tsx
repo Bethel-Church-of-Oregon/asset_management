@@ -5,8 +5,8 @@ import { IconBack } from '@/components/icons';
 import { requireSession } from '@/lib/auth';
 import { canEdit } from '@/lib/session';
 import { getLookups } from '@/lib/queries';
-import { currentYearInSeoul } from '@/lib/format';
-import { toYearCode } from '@/lib/asset-no';
+import { currentYear } from '@/lib/format';
+import { assetYearOptions } from '@/lib/asset-no';
 
 export const metadata: Metadata = { title: '자산 등록' };
 
@@ -43,11 +43,7 @@ export default async function NewAssetPage({
   }
 
   const lookups = await getLookups();
-  const thisYear = currentYearInSeoul();
-  const yearOptions = Array.from({ length: 12 }, (_, index) => {
-    const year = thisYear - index;
-    return { code: toYearCode(year), label: `${year}년 (${toYearCode(year)})` };
-  });
+  const yearOptions = assetYearOptions(currentYear());
 
   const noLookups = lookups.buildings.length === 0 || lookups.departments.length === 0;
 

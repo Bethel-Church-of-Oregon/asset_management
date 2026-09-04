@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IconCamera, IconScan } from './icons';
-import { normalizeAssetNo } from '@/lib/asset-no';
+import { EXAMPLE_ASSET_NO, normalizeAssetNo } from '@/lib/asset-no';
 
 type CameraState = 'idle' | 'starting' | 'running' | 'denied' | 'unsupported' | 'error';
 
@@ -45,7 +45,9 @@ export default function ScanBox({ initialValue = '' }: { initialValue?: string }
   async function startCamera() {
     if (!navigator.mediaDevices?.getUserMedia) {
       setCamera('unsupported');
-      setCameraMessage('이 브라우저에서는 카메라 스캔을 지원하지 않습니다. 번호를 직접 입력하세요.');
+      setCameraMessage(
+        '이 브라우저에서는 카메라 스캔을 지원하지 않습니다. 번호를 직접 입력하세요.',
+      );
       return;
     }
 
@@ -126,7 +128,7 @@ export default function ScanBox({ initialValue = '' }: { initialValue?: string }
             value={value}
             onChange={(e) => setValue(e.target.value)}
             className="field-input mono !py-3 pl-10 text-lg tracking-wider"
-            placeholder="26-11001"
+            placeholder={EXAMPLE_ASSET_NO}
             aria-label="자산번호 또는 검색어"
             autoComplete="off"
             autoFocus

@@ -15,16 +15,13 @@ import {
   IconWarning,
   IconWrench,
 } from '@/components/icons';
-import {
-  deleteAssetAction,
-  deleteMaintenanceAction,
-  restoreAssetAction,
-} from '@/actions/assets';
+import { deleteAssetAction, deleteMaintenanceAction, restoreAssetAction } from '@/actions/assets';
 import { requireSession } from '@/lib/auth';
 import { canAdmin, canEdit } from '@/lib/session';
 import { getAssetById } from '@/lib/queries';
 import { formatDate, formatDateTime, formatUsd } from '@/lib/format';
 import { MAINTENANCE_LABELS } from '@/lib/constants';
+import { assetNoBarcodeValue } from '@/lib/asset-no';
 
 export async function generateMetadata({
   params,
@@ -98,12 +95,8 @@ export default async function AssetDetailPage({
             <IconWarning />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold">
-              폐기된 자산입니다 · {formatDate(asset.disposedDate)}
-            </p>
-            {asset.disposalReason ? (
-              <p className="mt-0.5">사유: {asset.disposalReason}</p>
-            ) : null}
+            <p className="font-semibold">폐기된 자산입니다 · {formatDate(asset.disposedDate)}</p>
+            {asset.disposalReason ? <p className="mt-0.5">사유: {asset.disposalReason}</p> : null}
             {asset.disposalNote ? (
               <p className="mt-0.5 whitespace-pre-wrap text-red-800">{asset.disposalNote}</p>
             ) : null}
@@ -134,7 +127,9 @@ export default async function AssetDetailPage({
             </Row>
             <Row label="관리 팀명">{asset.teamName}</Row>
             <Row label="건물 / 위치">
-              {asset.buildingName ? `${asset.buildingCode} · ${asset.buildingName}` : asset.buildingCode}
+              {asset.buildingName
+                ? `${asset.buildingCode} · ${asset.buildingName}`
+                : asset.buildingCode}
             </Row>
             <Row label="설치 / 보관 장소">{asset.location}</Row>
             <Row label="수량">
@@ -252,8 +247,17 @@ export default async function AssetDetailPage({
             <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
               바코드
             </h2>
-            <Barcode value={asset.assetNo} moduleWidth={2} height={64} fontSize={13} />
-            <Link href={`/labels?ids=${asset.id}`} className="btn-secondary mt-3 w-full !py-1.5 text-xs">
+            <Barcode
+              value={assetNoBarcodeValue(asset.assetNo)}
+              text={asset.assetNo}
+              moduleWidth={2}
+              height={64}
+              fontSize={13}
+            />
+            <Link
+              href={`/labels?ids=${asset.id}`}
+              className="btn-secondary mt-3 w-full !py-1.5 text-xs"
+            >
               <IconPrinter />
               라벨 출력
             </Link>

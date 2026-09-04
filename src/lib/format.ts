@@ -23,27 +23,36 @@ export function formatDate(value: string | Date | null | undefined): string {
   return `${match[1]}. ${match[2]}. ${match[3]}.`;
 }
 
-/** Timestamps rendered in Korea time regardless of where the server runs. */
+/**
+ * 교회가 있는 지역의 시간대. 서버(Vercel)는 UTC 로 돌기 때문에 "오늘"·"올해" 를
+ * 서버 시각으로 계산하면 오레곤 기준으로 하루가 앞서거나 뒤설 수 있습니다.
+ * 여름/겨울 시간(PDT/PST)은 IANA 이름을 쓰면 자동으로 반영됩니다.
+ */
+export const APP_TIME_ZONE = 'America/Los_Angeles';
+
+/** Timestamps rendered in church-local time regardless of where the server runs. */
 export function formatDateTime(value: Date | string | null | undefined): string {
   if (!value) return '—';
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   return new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
+    timeZone: APP_TIME_ZONE,
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);
 }
 
-/** Today's date in Korea time as `YYYY-MM-DD`, for date input defaults. */
-export function todayInSeoul(): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+/** Today's date in church-local time as `YYYY-MM-DD`, for date input defaults. */
+export function today(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: APP_TIME_ZONE }).format(new Date());
 }
 
-/** Current year in Korea time — the default 취득연도 when registering. */
-export function currentYearInSeoul(): number {
+/** Current year in church-local time — the default 취득연도 when registering. */
+export function currentYear(): number {
   return Number(
-    new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric' }).format(new Date()),
+    new Intl.DateTimeFormat('en-CA', { timeZone: APP_TIME_ZONE, year: 'numeric' }).format(
+      new Date(),
+    ),
   );
 }
 
