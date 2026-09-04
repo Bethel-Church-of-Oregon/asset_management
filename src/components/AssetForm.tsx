@@ -448,18 +448,19 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
 
       {/* ── 저장 ─────────────────────────────────────────────────────────── */}
       <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
-        <SubmitButton pendingLabel="저장 중...">
-          {mode === 'create' ? '등록하고 상세 보기' : '변경사항 저장'}
+        <SubmitButton pendingLabel={mode === 'create' ? '등록 중...' : '저장 중...'}>
+          {mode === 'create' ? '등록 완료' : '변경사항 저장'}
         </SubmitButton>
 
+        {/* 같은 건물·사역원·팀·장소를 유지한 빈 폼으로 돌아가 다음 번호를 채웁니다. */}
         {mode === 'create' ? (
           <SubmitButton
             className="btn-secondary"
             name="_continue"
             value="1"
-            pendingLabel="저장 중..."
+            pendingLabel="등록 중..."
           >
-            등록하고 계속 등록
+            다음 자산 등록
           </SubmitButton>
         ) : null}
 
