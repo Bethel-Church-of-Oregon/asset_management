@@ -94,7 +94,6 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
       : null;
 
   const errors = state.fieldErrors ?? {};
-  const deptName = lookups.departments.find((d) => d.code === deptCode)?.name;
 
   return (
     <form action={formAction} className="space-y-5">
@@ -258,12 +257,9 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
           />
         </Field>
 
-        <Field
-          label="관리부서 팀명"
-          htmlFor="teamName"
-          error={errors.teamName}
-          hint={deptName ? `부서: ${deptName}` : '예: 예배사역원 미디어팀'}
-        >
+        {/* hint 를 두지 않습니다 — 입력칸 안내문(placeholder)과 같은 말이 되고,
+            선택한 부서는 바로 위 '관리부서' 칸에 이미 보입니다. */}
+        <Field label="관리부서 및 팀명" htmlFor="teamName" error={errors.teamName}>
           <input
             id="teamName"
             name="teamName"
@@ -275,12 +271,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
           />
         </Field>
 
-        <Field
-          label="설치 / 보관 장소"
-          htmlFor="location"
-          error={errors.location}
-          hint="예: 비전성전 유아부실"
-        >
+        <Field label="설치 / 보관 장소" htmlFor="location" error={errors.location}>
           <input
             id="location"
             name="location"
@@ -341,12 +332,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
           <MoneyInput id="acquiredPrice" name="acquiredPrice" defaultValue={asset?.acquiredPrice} />
         </Field>
 
-        <Field
-          label="구입처"
-          htmlFor="vendor"
-          error={errors.vendor}
-          hint="예: Best Buy (Jantzen Beach)"
-        >
+        <Field label="구입처" htmlFor="vendor" error={errors.vendor} hint="예: Best Buy">
           <input
             id="vendor"
             name="vendor"
