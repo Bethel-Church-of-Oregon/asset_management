@@ -137,6 +137,17 @@ CSV 파일명·기본 날짜가 내일로 찍혔다.
 - 이름: `src/lib/app-info.ts` 한 곳
 - 로고: `public/logo.jpg` (헤더·로그인) + `src/app/icon.jpg` (탭 아이콘) — 둘 다 교체
 
+## 예시 문구
+
+폼의 `placeholder` · `hint` 는 시드의 예시 자산(`src/db/seed.ts`)과 같은 세계관을
+써야 한다 — 오레곤 기준(Best Buy · Costco · IKEA · Sweetwater, 미국 판매 모델명,
+인치/피트). 시드만 바꾸고 폼 예시를 놓쳐 "하이마트 강남점" 이 화면에 남은 적이 있다.
+바꿀 때 함께 훑을 곳:
+
+```bash
+grep -rn 'placeholder="\|hint="' src/components src/app
+```
+
 ## 통화
 
 미국 달러. 금액 컬럼은 `numeric(14, 2)` — 센트를 담아야 하므로 `scale 0` 으로 바꾸지 않는다.

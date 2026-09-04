@@ -66,7 +66,7 @@ export default function MaintenanceForm({ assetId }: { assetId: number }) {
             id="vendor"
             name="vendor"
             className="field-input"
-            placeholder="예: 사운드코리아 A/S"
+            placeholder="예: Sweetwater Service"
             maxLength={160}
           />
         </div>

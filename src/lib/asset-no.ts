@@ -71,12 +71,31 @@ export function toSeq(seq: number | string): string {
   return String(n).padStart(SEQ_DIGITS, '0');
 }
 
+/**
+ * 각 조각이 저장 형식(0 으로 채운 고정 자리수)에 맞는지 검사합니다.
+ *
+ * 정규식을 쓰는 곳마다 따로 적으면 자리수를 바꿀 때 한 곳이 빠집니다 —
+ * 실제로 자리수를 늘릴 때 `suggestSeqAction` 의 1자리 검사가 남아 있어
+ * 번호 제안이 항상 실패했습니다.
+ */
+export function isYearCode(value: string): boolean {
+  return /^\d{2}$/.test(value);
+}
+
+export function isCode(value: string): boolean {
+  return new RegExp(`^\\d{${CODE_DIGITS}}$`).test(value);
+}
+
+export function isSeq(value: string): boolean {
+  return new RegExp(`^\\d{${SEQ_DIGITS}}$`).test(value);
+}
+
 export function buildAssetNo(parts: AssetNoParts): string {
   const { yearCode, buildingCode, deptCode, seq } = parts;
-  if (!/^\d{2}$/.test(yearCode)) throw new Error(`Invalid yearCode: ${yearCode}`);
-  if (!/^\d{2}$/.test(buildingCode)) throw new Error(`Invalid buildingCode: ${buildingCode}`);
-  if (!/^\d{2}$/.test(deptCode)) throw new Error(`Invalid deptCode: ${deptCode}`);
-  if (!/^\d{4}$/.test(seq)) throw new Error(`Invalid seq: ${seq}`);
+  if (!isYearCode(yearCode)) throw new Error(`Invalid yearCode: ${yearCode}`);
+  if (!isCode(buildingCode)) throw new Error(`Invalid buildingCode: ${buildingCode}`);
+  if (!isCode(deptCode)) throw new Error(`Invalid deptCode: ${deptCode}`);
+  if (!isSeq(seq)) throw new Error(`Invalid seq: ${seq}`);
   return `${yearCode}-${buildingCode}${deptCode}-${seq}`;
 }
 

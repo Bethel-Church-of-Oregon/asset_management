@@ -9,8 +9,12 @@ import {
   assetNoBarcodeValue,
   assetNoFragment,
   assetYearOptions,
+  SEQ_MAX,
   buildAssetNo,
+  isCode,
+  isSeq,
   isValidAssetNo,
+  isYearCode,
   normalizeAssetNo,
   parseAssetNo,
   toCode,
@@ -52,6 +56,24 @@ test('toSeq pads to four digits', () => {
   assert.throws(() => toSeq(10000));
   assert.throws(() => toSeq(-1));
   assert.throws(() => toSeq(1.5));
+});
+
+test('isYearCode / isCode / isSeq 는 저장 형식만 통과시킨다', () => {
+  // 이 검사가 자리수와 어긋나면 번호 제안이 조용히 실패합니다 (실제로 겪은 버그).
+  assert.equal(isYearCode('26'), true);
+  for (const bad of ['2', '260', '2a', '']) assert.equal(isYearCode(bad), false, `year ${bad}`);
+
+  for (const ok of ['01', '09', '10', '99']) assert.equal(isCode(ok), true, `code ${ok}`);
+  for (const bad of ['1', '001', '0a', '', ' 01']) assert.equal(isCode(bad), false, `code ${bad}`);
+
+  for (const ok of ['0001', '0999', '9999']) assert.equal(isSeq(ok), true, `seq ${ok}`);
+  for (const bad of ['1', '001', '00001', '000a', ''])
+    assert.equal(isSeq(bad), false, `seq ${bad}`);
+
+  // 폼이 만들어 넘기는 값은 그대로 통과해야 합니다.
+  assert.equal(isCode(toCode(1)), true);
+  assert.equal(isSeq(toSeq(1)), true);
+  assert.equal(isSeq(toSeq(SEQ_MAX)), true);
 });
 
 test('buildAssetNo composes the documented format', () => {

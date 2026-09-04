@@ -59,15 +59,24 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
 
     let cancelled = false;
     startSuggest(async () => {
-      const result = await suggestSeqAction(yearCode, buildingCode, deptCode);
-      if (cancelled) return;
-      if (result.seq) {
-        setSeq(result.seq);
-        setSeqNotice(null);
-      } else {
-        setSeqNotice(
-          `이 조합의 번호(${toSeq(1)}~${SEQ_MAX})를 모두 사용했습니다. 다른 조합을 선택하세요.`,
-        );
+      // 소진과 실패를 구분합니다 — 둘을 같은 문구로 보여 주면 한 번도 쓰지 않은
+      // 조합에 "모두 사용했습니다" 가 떠서 원인을 찾을 수 없게 됩니다.
+      try {
+        const result = await suggestSeqAction(yearCode, buildingCode, deptCode);
+        if (cancelled) return;
+        if (result.seq) {
+          setSeq(result.seq);
+          setSeqNotice(null);
+        } else if (result.exhausted) {
+          setSeqNotice(
+            `이 조합의 번호(${toSeq(1)}~${SEQ_MAX})를 모두 사용했습니다. 다른 조합을 선택하세요.`,
+          );
+        } else {
+          setSeqNotice('다음 번호를 제안하지 못했습니다. 번호를 직접 입력하세요.');
+        }
+      } catch {
+        if (cancelled) return;
+        setSeqNotice('다음 번호를 불러오지 못했습니다. 번호를 직접 입력하세요.');
       }
     });
     return () => {
@@ -320,7 +329,12 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
           <MoneyInput id="acquiredPrice" name="acquiredPrice" defaultValue={asset?.acquiredPrice} />
         </Field>
 
-        <Field label="구입처" htmlFor="vendor" error={errors.vendor} hint="예: 하이마트 강남점">
+        <Field
+          label="구입처"
+          htmlFor="vendor"
+          error={errors.vendor}
+          hint="예: Best Buy (Jantzen Beach)"
+        >
           <input
             id="vendor"
             name="vendor"
@@ -339,7 +353,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
             name="manufacturer"
             className="field-input"
             defaultValue={asset?.manufacturer ?? ''}
-            placeholder="예: LG전자"
+            placeholder="예: LG"
             maxLength={120}
           />
         </Field>
@@ -350,7 +364,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
             name="modelName"
             className="field-input mono"
             defaultValue={asset?.modelName ?? ''}
-            placeholder="예: 65UR8050"
+            placeholder="예: 65UQ7570PUJ"
             maxLength={160}
           />
         </Field>
@@ -361,7 +375,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
             name="serialNo"
             className="field-input mono"
             defaultValue={asset?.serialNo ?? ''}
-            placeholder="예: SN-LG-4471082"
+            placeholder="예: 303MXNP4K721"
             maxLength={160}
           />
         </Field>
@@ -372,7 +386,7 @@ export default function AssetForm({ mode, lookups, yearOptions, asset, defaults 
             name="spec"
             className="field-input"
             defaultValue={asset?.spec ?? ''}
-            placeholder="예: 65인치 4K UHD 벽걸이"
+            placeholder='예: 65" 4K UHD, 벽걸이 설치'
           />
         </Field>
       </FormSection>

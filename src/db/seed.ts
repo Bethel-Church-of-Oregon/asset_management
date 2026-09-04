@@ -4,6 +4,7 @@
  *   npm run db:push     # 테이블 생성
  *   npm run db:seed     # 기준정보 + 관리자 계정
  *   npm run db:seed -- --sample   # 예시 자산 6건까지 함께 생성
+ *   npm run db:seed -- --sample --refresh   # 이미 있는 예시 자산의 내용도 최신 예시로
  *
  * 여러 번 실행해도 안전합니다 (이미 있는 값은 건너뜁니다).
  */
@@ -12,7 +13,7 @@ import { loadEnv } from '../lib/load-env';
 loadEnv();
 
 import { hash } from 'bcryptjs';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from './client';
 import { assets, buildings, departments, maintenanceLogs, users } from './schema';
 import { buildAssetNo } from '../lib/asset-no';
@@ -133,8 +134,36 @@ const SAMPLE_ASSETS = [
   },
 ];
 
+/**
+ * 예시 수리·점검 이력. 자산번호를 열로 두어 예시 자산과 따로 갱신할 수 있게 합니다.
+ * `performedOn` + `description` 을 같은 이력으로 보는 기준으로 씁니다.
+ */
+type SampleLog = Omit<typeof maintenanceLogs.$inferInsert, 'assetId'>;
+
+const SAMPLE_LOGS: Record<string, SampleLog[]> = {
+  '26-0101-0001': [
+    {
+      kind: 'inspection',
+      performedOn: '2026-05-10',
+      description: '정기 음향 점검 — 배터리 교체, 주파수 재설정',
+      performedBy: '음향팀 박OO',
+    },
+    {
+      kind: 'repair',
+      performedOn: '2026-07-22',
+      description: '2번 채널 리시버 잡음 — 안테나 커넥터 교체',
+      cost: '145.00',
+      vendor: 'Sweetwater Service',
+      performedBy: '외부 업체',
+    },
+  ],
+};
+
 async function main() {
   const sample = process.argv.includes('--sample');
+  // --refresh: 이미 있는 예시 자산의 내용을 최신 예시 값으로 덮어씁니다.
+  // 예시 데이터의 구입처·모델명을 바꿨을 때 예전 값이 화면에 남는 것을 정리하는 용도입니다.
+  const refresh = process.argv.includes('--refresh');
 
   console.log('▶ 기준정보 확인 중...');
   for (const b of DEFAULT_BUILDINGS) {
@@ -188,41 +217,77 @@ async function main() {
   }
 
   if (sample) {
-    console.log('▶ 예시 자산 등록 중...');
+    console.log(refresh ? '▶ 예시 자산 등록·갱신 중...' : '▶ 예시 자산 등록 중...');
     let created = 0;
+    let updated = 0;
+    let skipped = 0;
+
     for (const item of SAMPLE_ASSETS) {
       const { parts, ...rest } = item;
       const assetNo = buildAssetNo(parts);
-      const inserted = await db
+      const [inserted] = await db
         .insert(assets)
         .values({ assetNo, ...parts, ...rest })
         .onConflictDoNothing({ target: assets.assetNo })
-        .returning({ id: assets.id, assetNo: assets.assetNo });
-      if (inserted.length > 0) {
+        .returning({ id: assets.id });
+
+      let assetId = inserted?.id;
+      if (inserted) {
         created++;
-        if (inserted[0].assetNo === '26-0101-0001') {
-          await db.insert(maintenanceLogs).values([
-            {
-              assetId: inserted[0].id,
-              kind: 'inspection',
-              performedOn: '2026-05-10',
-              description: '정기 음향 점검 — 배터리 교체, 주파수 재설정',
-              performedBy: '음향팀 박OO',
-            },
-            {
-              assetId: inserted[0].id,
-              kind: 'repair',
-              performedOn: '2026-07-22',
-              description: '2번 채널 리시버 잡음 — 안테나 커넥터 교체',
-              cost: '145.00',
-              vendor: 'Sweetwater Service',
-              performedBy: '외부 업체',
-            },
-          ]);
+      } else {
+        const [existing] = await db
+          .select({ id: assets.id, name: assets.name })
+          .from(assets)
+          .where(eq(assets.assetNo, assetNo))
+          .limit(1);
+        if (!existing) continue;
+
+        // 자산명이 예시와 다르면 이 번호는 실제 자산이 쓰고 있는 것입니다 —
+        // 예시 데이터로 덮어쓰면 교회 자산 기록을 지우게 되므로 건너뜁니다.
+        if (existing.name !== item.name) {
+          skipped++;
+          console.log(`  ! ${assetNo} 는 '${existing.name}' 이 쓰고 있어 건드리지 않았습니다.`);
+          continue;
+        }
+        assetId = existing.id;
+        if (refresh) {
+          await db
+            .update(assets)
+            .set({ ...parts, ...rest, updatedAt: new Date() })
+            .where(eq(assets.id, existing.id));
+          updated++;
+        }
+      }
+
+      // 수리이력: 같은 날짜·내용의 이력이 있으면 갱신, 없으면 추가. 지우지는 않습니다.
+      for (const log of SAMPLE_LOGS[assetNo] ?? []) {
+        const [existingLog] = await db
+          .select({ id: maintenanceLogs.id })
+          .from(maintenanceLogs)
+          .where(
+            and(
+              eq(maintenanceLogs.assetId, assetId!),
+              eq(maintenanceLogs.performedOn, log.performedOn),
+              eq(maintenanceLogs.description, log.description),
+            ),
+          )
+          .limit(1);
+        if (!existingLog) {
+          await db.insert(maintenanceLogs).values({ ...log, assetId: assetId! });
+        } else if (refresh) {
+          await db.update(maintenanceLogs).set(log).where(eq(maintenanceLogs.id, existingLog.id));
         }
       }
     }
-    console.log(`  ${created}건 신규 등록`);
+
+    const parts = [`${created}건 신규 등록`];
+    if (refresh) parts.push(`${updated}건 갱신`);
+    if (skipped > 0) parts.push(`${skipped}건 건너뜀`);
+    console.log(`  ${parts.join(' · ')}`);
+    if (!refresh && created === 0) {
+      console.log('  예시 자산이 이미 있습니다. 내용을 최신 예시로 맞추려면:');
+      console.log('    npm run db:seed -- --sample --refresh');
+    }
   }
 
   console.log('\n✅ 완료');

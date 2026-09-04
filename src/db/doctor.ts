@@ -13,6 +13,7 @@ import { compare } from 'bcryptjs';
 import { sql } from 'drizzle-orm';
 import { db, isNeonUrl } from './client';
 import { users } from './schema';
+import { CODE_DIGITS } from '../lib/asset-no';
 import { cleanUsername, usernameFromEmail } from '../lib/username';
 
 const mark = (pass: boolean) => (pass ? '[32mO[0m' : '[31mX[0m');
@@ -110,6 +111,23 @@ async function main() {
   console.log(`  ${mark(columns.has('username'))} users.username (로그인 아이디)`);
   if (!columns.has('username')) {
     fail('users 테이블에 아이디 칸이 없습니다. `npm run db:add-username` 을 실행하세요.');
+    return problems;
+  }
+
+  // 자산번호 자리수 이관 여부 — 안 하면 화면의 코드 목록과 저장 형식이 어긋나
+  // "건물/위치를 선택하세요" 나 번호 제안 실패로 나타납니다.
+  const codeRows = toRows<{ table_name: string; character_maximum_length: number }>(
+    await db.execute(sql`
+      select table_name, character_maximum_length from information_schema.columns
+      where table_schema = 'public'
+        and (table_name, column_name) in (('buildings', 'code'), ('departments', 'code'))`),
+  );
+  const narrow = codeRows.filter((r) => Number(r.character_maximum_length) < CODE_DIGITS);
+  console.log(
+    `  ${mark(narrow.length === 0)} 자산번호 자리수 (건물·사역원 코드 ${CODE_DIGITS}자리)`,
+  );
+  if (narrow.length > 0) {
+    fail('예전 자산번호 형식입니다. `npm run db:widen-asset-no` 를 실행하세요.');
     return problems;
   }
 

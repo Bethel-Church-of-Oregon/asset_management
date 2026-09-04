@@ -173,6 +173,16 @@ npm run db:seed        # 기준정보(건물·사역원) + 관리자 계정
 npm run db:seed -- --sample
 ```
 
+예시 자산이 이미 있는데 내용(구입처·모델명 등)을 최신 예시로 맞추고 싶다면:
+
+```bash
+npm run db:seed -- --sample --refresh
+```
+
+`--refresh` 는 **자산명이 예시와 같은 행만** 덮어씁니다. 예시와 같은 번호를 실제
+자산이 쓰고 있으면 건드리지 않고 건너뛰며, 어떤 행도 삭제하지 않습니다.
+수리·점검 이력은 날짜와 내용이 같은 것만 갱신하고 없는 것은 추가합니다.
+
 ### 5-4. 로컬 실행
 
 ```bash
@@ -367,7 +377,7 @@ npm run db:push          # "No changes detected" 가 나와야 정상
 | `npm run db:push` | 스키마를 데이터베이스에 반영 |
 | `npm run db:generate` | 마이그레이션 SQL 생성 |
 | `npm run db:studio` | Drizzle Studio (데이터 조회·편집) |
-| `npm run db:seed` | 기준정보 + 관리자 계정 (`-- --sample` 로 예시 자산 포함) |
+| `npm run db:seed` | 기준정보 + 관리자 계정 (`-- --sample` 로 예시 자산, `--refresh` 로 예시 갱신) |
 | `npm run db:add-username` | 이메일 로그인 시절 DB 에 아이디 칸 추가 · 값 채우기 (한 번만) |
 | `npm run db:widen-asset-no` | 예전 자산번호(`YY-BDSSS`)를 새 형식(`YY-BBDD-SSSS`)으로 변환 (한 번만) |
 | `npm run db:doctor` | 설정 진단 — 연결·테이블·계정·비밀번호를 확인 (값은 출력하지 않음) |

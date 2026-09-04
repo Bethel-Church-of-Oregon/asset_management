@@ -8,7 +8,15 @@ import { db } from '@/db';
 import { isUniqueViolation } from '@/lib/db-errors';
 import { ASSET_STATUSES, MAINTENANCE_KINDS, assets, maintenanceLogs } from '@/db/schema';
 import { requireEditor } from '@/lib/auth';
-import { SEQ_DIGITS, SEQ_MAX, buildAssetNo } from '@/lib/asset-no';
+import {
+  SEQ_DIGITS,
+  SEQ_MAX,
+  buildAssetNo,
+  isCode,
+  isSeq,
+  isYearCode,
+  toSeq,
+} from '@/lib/asset-no';
 import { getNextSeq } from '@/lib/queries';
 import { cleanMoneyInput, isCalendarDate, isMoneyAmount, today } from '@/lib/format';
 import { type FormState, toErrorMessage, zodToFieldErrors } from './types';
@@ -46,24 +54,16 @@ const optionalMoney = z
 
 const assetSchema = z.object({
   name: z.string().trim().min(1, '자산명을 입력하세요.').max(200, '200자 이내로 입력하세요.'),
-  yearCode: z
-    .string()
-    .trim()
-    .regex(/^\d{2}$/, '취득연도를 선택하세요.'),
-  buildingCode: z
-    .string()
-    .trim()
-    .regex(/^\d{2}$/, '건물/위치를 선택하세요.'),
-  deptCode: z
-    .string()
-    .trim()
-    .regex(/^\d{2}$/, '관리 사역원을 선택하세요.'),
+  yearCode: z.string().trim().refine(isYearCode, '취득연도를 선택하세요.'),
+  buildingCode: z.string().trim().refine(isCode, '건물/위치를 선택하세요.'),
+  deptCode: z.string().trim().refine(isCode, '관리 사역원을 선택하세요.'),
   seq: z
     .string()
     .trim()
     .regex(new RegExp(`^\\d{1,${SEQ_DIGITS}}$`), `고유번호는 1~${SEQ_MAX} 사이 숫자입니다.`)
     .transform((v) => v.padStart(SEQ_DIGITS, '0'))
-    .refine((v) => Number(v) > 0, '고유번호는 0001부터 시작합니다.'),
+    .refine(isSeq, `고유번호는 ${SEQ_DIGITS}자리 숫자입니다.`)
+    .refine((v) => Number(v) > 0, `고유번호는 ${toSeq(1)} 부터 시작합니다.`),
   teamName: optionalText(100),
   location: optionalText(200),
   acquiredDate: optionalDate,
@@ -182,7 +182,7 @@ export async function createAssetAction(_prev: FormState, formData: FormData): P
         ok: false,
         fieldErrors: {
           seq: suggestion
-            ? `이미 사용 중인 자산번호입니다. 사용 가능한 다음 번호: ${String(suggestion).padStart(3, '0')}`
+            ? `이미 사용 중인 자산번호입니다. 사용 가능한 다음 번호: ${toSeq(suggestion)}`
             : '이미 사용 중인 자산번호입니다.',
         },
       };
@@ -401,19 +401,23 @@ export async function deleteMaintenanceAction(formData: FormData): Promise<void>
 }
 
 /** 등록 폼에서 건물/사역원/연도를 바꿀 때 다음 고유번호를 받아옵니다. */
+/**
+ * 다음 고유번호 제안.
+ *
+ * `seq` 가 null 일 때 화면이 "번호를 다 썼다" 고 말해도 되는지는 `exhausted`
+ * 로만 판단합니다. 예전에는 이 구분이 없어서, 자리수가 늘어난 뒤 입력값 검사가
+ * 어긋나 제안이 실패했을 때 한 번도 쓰지 않은 조합에 "모두 사용했습니다" 가
+ * 떴습니다. 실패와 소진은 사용자에게 완전히 다른 뜻입니다.
+ */
 export async function suggestSeqAction(
   yearCode: string,
   buildingCode: string,
   deptCode: string,
-): Promise<{ seq: string | null }> {
+): Promise<{ seq: string | null; exhausted: boolean }> {
   await requireEditor();
-  if (
-    !/^\d{2}$/.test(yearCode) ||
-    !/^[0-9A-Z]$/.test(buildingCode) ||
-    !/^[0-9A-Z]$/.test(deptCode)
-  ) {
-    return { seq: null };
+  if (!isYearCode(yearCode) || !isCode(buildingCode) || !isCode(deptCode)) {
+    return { seq: null, exhausted: false };
   }
   const next = await getNextSeq(yearCode, buildingCode, deptCode);
-  return { seq: next === null ? null : String(next).padStart(3, '0') };
+  return next === null ? { seq: null, exhausted: true } : { seq: toSeq(next), exhausted: false };
 }
