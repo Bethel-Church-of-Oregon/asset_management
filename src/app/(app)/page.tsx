@@ -43,7 +43,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-slate-900">{session.name}님, 안녕하세요.</h1>
+        <h1 className="text-xl font-bold text-slate-900">대시보드</h1>
         <p className="mt-1 text-sm text-slate-500">
           자산 현황을 한눈에 봅니다. 바코드 스캔과 번호 조회는 상단 메뉴의{' '}
           <Link href="/scan" className="font-semibold text-brand-700">

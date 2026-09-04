@@ -19,11 +19,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const items: NavItem[] = [
     { href: '/', label: '대시보드', icon: <IconDashboard /> },
-    { href: '/assets', label: '자산 목록', icon: <IconList /> },
+    { href: '/assets', label: '자산목록', icon: <IconList /> },
     { href: '/scan', label: '스캔 · 조회', icon: <IconScan /> },
   ];
   if (canEdit(session.role)) {
-    items.splice(2, 0, { href: '/assets/new', label: '자산 등록', icon: <IconPlus /> });
+    items.splice(2, 0, { href: '/assets/new', label: '자산등록', icon: <IconPlus /> });
   }
   if (canAdmin(session.role)) {
     items.push({ href: '/settings', label: '설정', icon: <IconSettings /> });
