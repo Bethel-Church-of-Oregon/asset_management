@@ -205,9 +205,29 @@ async function main() {
       console.log('  비밀번호는 그대로 둡니다. SEED_ADMIN_PASSWORD 를 바꿨다면:');
       console.log('    npm run db:set-password');
     } else {
+      // 이메일도 unique 입니다. 두 번째 계정을 시드로 만들 때 SEED_ADMIN_EMAIL 이
+      // 첫 계정 것 그대로 남아 있는 일이 흔한데, 그대로 insert 하면 raw SQL 오류가
+      // 그대로 튀어나옵니다. 로그인에 쓰이지 않는 선택 항목이므로 비워서 만들고
+      // 어떻게 채우는지 알려 줍니다.
+      let contactEmail: string | null = email || null;
+      if (contactEmail) {
+        const [emailOwner] = await db
+          .select({ username: users.username, name: users.name })
+          .from(users)
+          .where(eq(users.email, contactEmail))
+          .limit(1);
+        if (emailOwner) {
+          console.log(
+            `▶ 이메일 ${contactEmail} 은 이미 '${emailOwner.name} (${emailOwner.username})' 이 쓰고 있습니다.`,
+          );
+          console.log('  이메일 없이 계정을 만듭니다. 필요하면 설정 > 사용자 계정 에서 넣으세요.');
+          contactEmail = null;
+        }
+      }
+
       await db.insert(users).values({
         username,
-        email: email || null,
+        email: contactEmail,
         name,
         passwordHash: await hash(password, 12),
         role: 'admin',
