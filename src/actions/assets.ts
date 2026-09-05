@@ -249,7 +249,9 @@ export async function createAssetAction(_prev: FormState, formData: FormData): P
     redirect(`/assets/new?${params.toString()}`);
   }
 
-  redirect(`/assets/${createdId}?created=1`);
+  // 버튼 이름이 '등록 후 바코드 출력' 이므로 곧바로 라벨 출력 화면으로 보냅니다.
+  // 라벨은 등록 직후에 붙여야 물건과 번호가 어긋나지 않습니다.
+  redirect(`/labels?ids=${createdId}&created=1`);
 }
 
 export async function updateAssetAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -378,6 +380,31 @@ export async function restoreAssetAction(formData: FormData): Promise<void> {
       updatedAt: new Date(),
     })
     .where(and(eq(assets.id, id), eq(assets.status, 'disposed')));
+
+  revalidatePath(`/assets/${id}`);
+  revalidatePath('/assets');
+  revalidatePath('/');
+}
+
+/**
+ * 수리 완료 — 상태를 사용중으로 되돌립니다.
+ *
+ * 수리·점검 이력을 추가해도 상태는 바뀌지 않습니다(기록과 상태는 별개 동작).
+ * 그래서 수리가 끝났을 때 수정 화면까지 들어가지 않고 한 번에 되돌릴 수 있게
+ * 둡니다 — 폐기의 '폐기 취소' 와 같은 자리, 같은 방식입니다.
+ *
+ * `status = 'repair'` 인 자산만 바꿉니다. 목록을 열어 둔 사이 다른 사람이
+ * 폐기했다면 그 변경을 덮어쓰지 않아야 합니다.
+ */
+export async function finishRepairAction(formData: FormData): Promise<void> {
+  const session = await requireEditor();
+  const id = Number(formData.get('id'));
+  if (!Number.isInteger(id) || id <= 0) throw new Error('잘못된 자산입니다.');
+
+  await db
+    .update(assets)
+    .set({ status: 'in_use', updatedBy: session.userId, updatedAt: new Date() })
+    .where(and(eq(assets.id, id), eq(assets.status, 'repair')));
 
   revalidatePath(`/assets/${id}`);
   revalidatePath('/assets');

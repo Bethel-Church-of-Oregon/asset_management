@@ -12,6 +12,8 @@ const MAX_LABELS = 500;
 type SearchParams = {
   ids?: string;
   all?: string;
+  /** 자산 등록 직후 넘어온 경우 — 확인 문구와 상세로 가는 길을 보여 줍니다. */
+  created?: string;
   q?: string;
   status?: string;
   building?: string;
@@ -75,6 +77,23 @@ export default async function LabelsPage({
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 print:max-w-none print:p-0">
       <h1 className="no-print mb-4 text-xl font-bold text-slate-900">바코드 라벨 출력</h1>
+      {params.created === '1' && assets.length === 1 ? (
+        <div
+          role="status"
+          className="no-print mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800"
+        >
+          <span>
+            <span className="mono font-bold">{assets[0].assetNo}</span> 등록 완료. 라벨을 출력해
+            물건에 붙이세요.
+          </span>
+          <Link
+            href={`/assets/${assets[0].id}`}
+            className="ml-auto text-xs font-semibold underline"
+          >
+            자산 상세 보기
+          </Link>
+        </div>
+      ) : null}
       {truncated ? (
         <div className="no-print mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           한 번에 최대 {MAX_LABELS}건까지 출력합니다. 나머지는 필터를 나눠 출력하세요.

@@ -470,26 +470,35 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
       )}
 
       {/* ── 저장 ─────────────────────────────────────────────────────────── */}
-      <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
-        <SubmitButton pendingLabel={mode === 'create' ? '등록 중...' : '저장 중...'}>
-          {mode === 'create' ? '등록 완료' : '변경사항 저장'}
-        </SubmitButton>
-
-        {/* 같은 건물·부서·팀·장소를 유지한 빈 폼으로 돌아가 다음 번호를 채웁니다. */}
-        {mode === 'create' ? (
-          <SubmitButton
-            className="btn-secondary"
-            name="_continue"
-            value="1"
-            pendingLabel="등록 중..."
-          >
-            다음 자산 등록
+      <div className="sticky bottom-0 -mx-4 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 등록 후 곧바로 라벨 출력 화면으로 갑니다 — 버튼 이름이 곧 동작입니다. */}
+          <SubmitButton pendingLabel={mode === 'create' ? '등록 중...' : '저장 중...'}>
+            {mode === 'create' ? '등록 후 바코드 출력' : '변경사항 저장'}
           </SubmitButton>
-        ) : null}
 
-        <Link href={asset ? `/assets/${asset.id}` : '/assets'} className="btn-secondary ml-auto">
-          취소
-        </Link>
+          {/* 같은 건물·부서·팀·장소를 유지한 빈 폼으로 돌아가 다음 번호를 채웁니다. */}
+          {mode === 'create' ? (
+            <SubmitButton
+              className="btn-secondary"
+              name="_continue"
+              value="1"
+              pendingLabel="등록 중..."
+            >
+              저장 후 다음 자산 등록
+            </SubmitButton>
+          ) : null}
+
+          <Link href={asset ? `/assets/${asset.id}` : '/assets'} className="btn-secondary ml-auto">
+            취소
+          </Link>
+        </div>
+
+        {mode === 'create' ? (
+          <p className="mt-2 text-xs text-slate-500">
+            &lsquo;저장 후 다음 자산 등록&rsquo; 은 추후에 바코드 출력이 가능합니다.
+          </p>
+        ) : null}
       </div>
     </form>
   );

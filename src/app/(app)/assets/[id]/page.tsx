@@ -6,6 +6,7 @@ import ConfirmSubmit from '@/components/ConfirmSubmit';
 import CopyButton from '@/components/CopyButton';
 import DisposeForm from '@/components/DisposeForm';
 import MaintenanceForm from '@/components/MaintenanceForm';
+import SubmitButton from '@/components/SubmitButton';
 import { MaintenanceBadge, StatusBadge } from '@/components/StatusBadge';
 import {
   IconBack,
@@ -15,7 +16,12 @@ import {
   IconWarning,
   IconWrench,
 } from '@/components/icons';
-import { deleteAssetAction, deleteMaintenanceAction, restoreAssetAction } from '@/actions/assets';
+import {
+  deleteAssetAction,
+  deleteMaintenanceAction,
+  finishRepairAction,
+  restoreAssetAction,
+} from '@/actions/assets';
 import { requireSession } from '@/lib/auth';
 import { canAdmin, canEdit } from '@/lib/session';
 import { getAssetById } from '@/lib/queries';
@@ -38,7 +44,7 @@ export default async function AssetDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ created?: string; updated?: string }>;
+  searchParams: Promise<{ updated?: string }>;
 }) {
   const session = await requireSession();
   const [{ id }, flags] = await Promise.all([params, searchParams]);
@@ -81,13 +87,31 @@ export default async function AssetDetailPage({
         </div>
       </div>
 
-      {flags.created === '1' ? (
-        <Flash>
-          등록이 완료되었습니다. <strong>라벨 출력</strong>을 눌러 바코드를 붙여 두세요.
-        </Flash>
-      ) : flags.updated === '1' ? (
-        <Flash>변경사항이 저장되었습니다.</Flash>
+      {asset.status === 'repair' ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <span className="shrink-0 text-amber-500">
+            <IconWarning />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">수리중입니다.</p>
+            <p className="mt-0.5 text-amber-800">
+              수리가 끝났으면 아래 버튼으로 상태를 되돌리세요. 수리 내용은 아래 &lsquo;수리 · 점검
+              이력&rsquo;에 따로 남깁니다.
+            </p>
+          </div>
+          {editable ? (
+            <form action={finishRepairAction} className="shrink-0">
+              <input type="hidden" name="id" value={asset.id} />
+              <SubmitButton className="btn-secondary !py-1.5 text-xs" pendingLabel="처리 중">
+                수리 완료
+              </SubmitButton>
+            </form>
+          ) : null}
+        </div>
       ) : null}
+
+      {/* 등록 직후에는 라벨 출력 화면으로 보내므로 여기서는 수정 확인만 띄웁니다. */}
+      {flags.updated === '1' ? <Flash>변경사항이 저장되었습니다.</Flash> : null}
 
       {asset.status === 'disposed' ? (
         <div className="flex flex-wrap items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
