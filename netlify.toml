@@ -1,0 +1,23 @@
+# Netlify 배포 설정
+#
+# 환경 변수(`DATABASE_URL` · `AUTH_SECRET`)는 여기에 쓰지 않습니다 —
+# Netlify 사이트 설정(Site configuration → Environment variables)에 넣습니다.
+# 이 파일은 저장소에 커밋되므로 비밀값이 들어가면 GitHub 에 그대로 노출됩니다.
+#
+# Node 버전은 `.nvmrc` (22) 를 Netlify 가 그대로 읽습니다.
+
+[build]
+  command = "npm run build"
+  # Next.js 런타임이 읽어 가는 빌드 산출물 폴더입니다.
+  # `next.config.mjs` 의 `distDir` 은 `NEXT_DIST_DIR` 이 없을 때 `.next` 이므로,
+  # Netlify 빌드 환경에는 `NEXT_DIST_DIR` 을 설정하지 마세요 (설정하면 런타임이
+  # 산출물을 못 찾아 모든 경로가 404 가 됩니다).
+  publish = ".next"
+
+[build.environment]
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# Next.js 런타임. 서버 컴포넌트·서버 액션은 Netlify Functions(Node)로,
+# `src/middleware.ts` 는 Edge Function 으로 배포됩니다.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

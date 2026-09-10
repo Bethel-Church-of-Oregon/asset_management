@@ -107,11 +107,19 @@ Neon 에 연결하는 `npm run db:seed` 가 실패할 수 있습니다.
 2. **Connection string** 에서 **Pooled connection** 값을 복사합니다.
    `...-pooler...` 가 포함된 주소여야 합니다.
 
-#### 리전은 Vercel 함수 리전과 맞추세요
+#### 리전은 서버 함수가 도는 곳과 맞추세요
 
-**기준은 교회 위치가 아니라 Vercel 서버리스 함수가 도는 리전입니다.**
+**기준은 교회 위치가 아니라 서버리스 함수가 도는 리전입니다.**
 사용자 ↔ 서버 왕복은 페이지당 1회지만, 서버 ↔ DB 왕복은 페이지당 여러 번 일어나기
 때문에 이쪽 지연이 훨씬 크게 증폭됩니다. 두 리전이 갈리면 조회가 눈에 띄게 느려집니다.
+
+**Netlify 에 올리는 경우** — 무료 플랜은 함수 리전을 고를 수 없습니다. 기본값이
+미국 동부(AWS `us-east-2` 오하이오)이므로 Neon 도 **`us-east-2`**, 없으면
+`us-east-1` (N. Virginia) 로 만드세요. 함수 리전 지정은 유료 플랜 기능입니다
+(현재 기본 리전은 Netlify 문서에서 한 번 확인하세요 — 바뀔 수 있습니다).
+
+**Vercel 에 올리는 경우** — **Project Settings → Functions → Function Region** 에서
+고를 수 있습니다.
 
 | Vercel 함수 리전 | 맞춰야 할 Neon 리전 |
 | --- | --- |
@@ -120,16 +128,16 @@ Neon 에 연결하는 `npm run db:seed` 가 실패할 수 있습니다.
 | `iad1` 워싱턴 D.C. — **Vercel 기본값** | `AWS us-east-1` (N. Virginia) |
 | `icn1` 서울 / `hnd1` 도쿄 | `AWS ap-northeast-1` (Tokyo) |
 
-Vercel 함수 리전은 **Project Settings → Functions → Function Region** 에서 바꿉니다
-(기본값은 `iad1` 이라, 그대로 두면 Neon 도 `us-east-1` 이어야 합니다).
-
-- **미국 서부(오리건)에서 쓴다면** — Vercel 을 `pdx1` 로 바꾸고 Neon 을 `us-west-2` 로
-  만드는 조합이 가장 빠릅니다. 사용자·서버·DB 가 모두 같은 지역에 모입니다.
-- **설정을 건드리기 부담스럽다면** — Vercel 기본값 `iad1` 을 두고 Neon 만
-  `us-east-1` 로 만드세요. 미국 서부에서 접속하면 왕복이 조금 붙지만, 리전이 갈린
-  경우보다 훨씬 낫습니다.
-- **절대 피해야 할 조합** — 함수는 `iad1`(동부), DB 는 `us-west-2`(서부) 처럼 갈라놓는 것.
+- **미국 서부(오리건)에서 쓴다면** — Vercel `pdx1` + Neon `us-west-2` 조합이 가장
+  빠릅니다. 사용자·서버·DB 가 모두 같은 지역에 모입니다.
+- **절대 피해야 할 조합** — 함수는 동부, DB 는 서부처럼 갈라놓는 것.
   DB 왕복마다 대륙을 건너므로 가장 느립니다.
+
+> **이미 Neon 프로젝트를 만든 뒤에 호스팅을 옮긴다면** 리전 조합이 어긋날 수 있습니다.
+> Neon 은 생성 후 리전을 못 바꾸므로, 서부(`us-west-2`) DB 를 Netlify(동부 함수)에
+> 붙이면 쿼리마다 대륙을 건넙니다. 페이지당 서너 번 왕복이면 0.2~0.3초 정도가
+> 붙습니다 — 내부 업무용으로는 견딜 수 있지만, 신경 쓰인다면 Neon 프로젝트를 동부에
+> 새로 만들고 데이터를 옮기는 편이 낫습니다.
 
 > 리전 목록은 Neon 콘솔에서 실제로 제공되는 것 중에 고르세요 (제공 리전은 바뀝니다).
 > 프로젝트를 만든 뒤에는 리전을 변경할 수 없으니, 생성 시점에 정해야 합니다.
@@ -195,11 +203,25 @@ npm run dev            # http://localhost:3000
 
 ---
 
-## 6. Vercel 배포
+## 6. 배포
+
+무료로 쓸 수 있는 곳은 Netlify 와 Vercel 둘 다입니다. 이 저장소에는
+**Netlify 설정(`netlify.toml`)이 들어 있습니다.** 어느 쪽이든 빌드에는
+데이터베이스 연결이 필요하지 않습니다.
+
+> **Cloudflare Pages / Workers 무료 플랜은 쓸 수 없습니다.** 비밀번호 해싱
+> (`src/lib/auth.ts` 의 bcrypt cost 12)에 요청당 0.7초 가까운 CPU 가 드는데, 무료
+> 플랜의 한도는 요청당 10ms 입니다 — 로그인이 리소스 초과(`Error 1102`)로 실패합니다.
+> Netlify Functions 는 CPU 시간이 아니라 실행 시간(10초)을 세므로 문제가 없습니다.
+> Cloudflare 로 가려면 유료 Workers 플랜을 쓰거나 해싱 방식을 바꿔야 하고, 후자는
+> 저장된 해시 형식이 달라져 전 사용자 비밀번호를 초기화해야 합니다.
+
+### 6-1. Netlify (이 저장소의 기본 설정)
 
 1. 이 폴더를 GitHub 저장소로 올립니다.
-2. Vercel 에서 **New Project → Import** 로 저장소를 선택합니다.
-3. **Environment Variables** 에 아래 두 개를 등록합니다 (Production / Preview 모두).
+2. Netlify 에서 **Add new site → Import an existing project** 로 저장소를 선택합니다.
+   빌드 명령과 배포 폴더는 `netlify.toml` 에 있으므로 화면에서 고칠 것이 없습니다.
+3. **Site configuration → Environment variables** 에 아래 두 개를 등록합니다.
 
    | Key | Value |
    | --- | --- |
@@ -207,12 +229,33 @@ npm run dev            # http://localhost:3000
    | `AUTH_SECRET` | `openssl rand -base64 32` 결과 |
 
    `SEED_*` 변수는 배포에 필요하지 않습니다 (시드 스크립트 전용).
-4. **Settings → Functions → Function Region** 이 Neon 리전과 같은 곳인지 확인합니다
-   (위 표 참고). 기본값은 `iad1` 워싱턴 D.C. 입니다.
-5. **Deploy** 를 누릅니다. 빌드에는 데이터베이스 연결이 필요하지 않습니다.
+   `NEXT_DIST_DIR` 은 **절대 등록하지 마세요** — 빌드 산출물 위치가 어긋나 모든
+   경로가 404 가 됩니다.
+4. **Deploy site** 를 누릅니다.
 
-> Vercel 프로젝트와 Neon 을 연동하려면 Vercel Marketplace 의 Neon 연동을 쓰면
-> `DATABASE_URL` 이 자동으로 주입됩니다. 이 경우 3번의 `DATABASE_URL` 등록은 생략합니다.
+배포되는 모양은 이렇습니다.
+
+| 이 앱의 구성 | Netlify 에서 |
+| --- | --- |
+| 서버 컴포넌트 · 서버 액션 | Netlify Functions (Node 런타임) |
+| `src/middleware.ts` 로그인 검사 | Edge Function |
+| `/api/assets/export` CSV | Netlify Functions |
+| CSS · 이미지 · 라벨 화면의 정적 자원 | CDN |
+
+Node 버전은 `.nvmrc` (22) 를 Netlify 가 그대로 읽습니다.
+
+### 6-2. Vercel
+
+1. **New Project → Import** 로 저장소를 선택합니다.
+2. **Environment Variables** 에 위와 같은 두 개를 등록합니다 (Production / Preview 모두).
+3. **Settings → Functions → Function Region** 이 Neon 리전과 같은 곳인지 확인합니다
+   (5-1 의 표 참고). 기본값은 `iad1` 워싱턴 D.C. 입니다.
+4. **Deploy** 를 누릅니다.
+
+`netlify.toml` 이 있어도 Vercel 배포에는 아무 영향이 없습니다 (서로 다른 파일을 읽습니다).
+
+> Vercel Marketplace 의 Neon 연동을 쓰면 `DATABASE_URL` 이 자동으로 주입되므로
+> 2번의 `DATABASE_URL` 등록을 생략할 수 있습니다.
 
 ### 배포 후 스키마 변경
 
@@ -311,6 +354,19 @@ npm run db:doctor
 > 바꾸지 않습니다. 운영 중 계정이 시드 한 번에 조용히 바뀌면 위험하기 때문입니다.
 > 그래서 시드한 뒤 `.env.local` 의 `SEED_ADMIN_PASSWORD` 를 수정해도 DB 는 예전 값을
 > 그대로 갖고 있습니다. `npm run db:set-password` 가 이 둘을 맞춰 줍니다.
+
+### Netlify 에서 모든 경로가 404
+
+`NEXT_DIST_DIR` 이 사이트 환경 변수에 들어가 있으면 빌드 산출물이 `.next` 가 아닌
+곳에 생겨서 Next.js 런타임이 아무것도 찾지 못합니다. 이 변수는 로컬에서 개발 서버를
+켜 둔 채로 프로덕션 빌드를 확인할 때만 쓰는 것입니다 — 배포 환경에서는 지우세요.
+
+### Netlify 빌드가 "Secrets scanning" 에서 실패
+
+`DATABASE_URL` 이나 `AUTH_SECRET` 의 값이 빌드 산출물에서 발견되면 Netlify 가 배포를
+막습니다. 이 앱은 두 값을 서버에서만 읽으므로 정상이라면 걸리지 않지만, 걸렸다면
+값이 실제로 클라이언트 번들에 새고 있다는 뜻이니 **먼저 원인을 찾으세요.**
+검사를 끄는 `SECRETS_SCAN_ENABLED=false` 는 문제를 감추는 것입니다.
 
 ### 브라우저 확장 프로그램 때문에 나는 하이드레이션 오류
 

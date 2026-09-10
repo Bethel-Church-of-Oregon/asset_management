@@ -43,6 +43,10 @@ NEXT_DIST_DIR=.next-verify DATABASE_URL="$TEST_DB" AUTH_SECRET="$TEST_SECRET" \
 `NEXT_DIST_DIR` 로 분리한다. 그냥 돌리면 dev 가 쓰고 있는 `.next` 를 프로덕션
 산출물로 덮어써서 사용자 화면이 이상해진다.
 
+`NEXT_DIST_DIR` 은 **로컬 검증 전용**이다. 배포 환경(Netlify·Vercel)의 환경 변수에
+넣으면 Next.js 런타임이 `.next` 에서 산출물을 못 찾아 모든 경로가 404 가 된다.
+Netlify 빌드 설정은 `netlify.toml` 에 있고, `publish` 는 `.next` 로 고정이다.
+
 ### 사용자의 개발 서버는 끄지 않는다
 
 포트 없는 `next dev` 는 사용자의 `npm run dev` 다. 내가 죽일 수 있는 것은 내가 띄운
