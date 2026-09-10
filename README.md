@@ -3,7 +3,7 @@
 교회 비품·자산을 등록하고, 자산번호 바코드 라벨을 출력하고, 스캔·조회로 상세내역을
 확인·수정하는 웹 애플리케이션입니다.
 
-- **호스팅** Vercel
+- **호스팅** Netlify
 - **데이터베이스** Neon (Serverless Postgres)
 - **스택** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · Drizzle ORM
 
@@ -113,31 +113,16 @@ Neon 에 연결하는 `npm run db:seed` 가 실패할 수 있습니다.
 사용자 ↔ 서버 왕복은 페이지당 1회지만, 서버 ↔ DB 왕복은 페이지당 여러 번 일어나기
 때문에 이쪽 지연이 훨씬 크게 증폭됩니다. 두 리전이 갈리면 조회가 눈에 띄게 느려집니다.
 
-**Netlify 에 올리는 경우** — 무료 플랜은 함수 리전을 고를 수 없습니다. 기본값이
-미국 동부(AWS `us-east-2` 오하이오)이므로 Neon 도 **`us-east-2`**, 없으면
-`us-east-1` (N. Virginia) 로 만드세요. 함수 리전 지정은 유료 플랜 기능입니다
-(현재 기본 리전은 Netlify 문서에서 한 번 확인하세요 — 바뀔 수 있습니다).
+**이 프로젝트는 `AWS US East 1 (N. Virginia)` 를 씁니다.** Netlify 무료 플랜은 함수
+리전을 고를 수 없고 기본이 미국 동부(`us-east-2` 오하이오)이므로, 같은 동부인
+`us-east-1` 이면 함수 ↔ DB 왕복이 10~15ms 수준으로 붙어 있습니다. 새로 만들 때도
+**미국 동부(`us-east-1` 또는 `us-east-2`)** 를 고르세요.
 
-**Vercel 에 올리는 경우** — **Project Settings → Functions → Function Region** 에서
-고를 수 있습니다.
-
-| Vercel 함수 리전 | 맞춰야 할 Neon 리전 |
-| --- | --- |
-| `pdx1` 오리건 (미국 서부) | `AWS us-west-2` (Oregon) |
-| `sfo1` 샌프란시스코 | `AWS us-west-2` (Oregon) |
-| `iad1` 워싱턴 D.C. — **Vercel 기본값** | `AWS us-east-1` (N. Virginia) |
-| `icn1` 서울 / `hnd1` 도쿄 | `AWS ap-northeast-1` (Tokyo) |
-
-- **미국 서부(오리건)에서 쓴다면** — Vercel `pdx1` + Neon `us-west-2` 조합이 가장
-  빠릅니다. 사용자·서버·DB 가 모두 같은 지역에 모입니다.
-- **절대 피해야 할 조합** — 함수는 동부, DB 는 서부처럼 갈라놓는 것.
-  DB 왕복마다 대륙을 건너므로 가장 느립니다.
-
-> **이미 Neon 프로젝트를 만든 뒤에 호스팅을 옮긴다면** 리전 조합이 어긋날 수 있습니다.
-> Neon 은 생성 후 리전을 못 바꾸므로, 서부(`us-west-2`) DB 를 Netlify(동부 함수)에
-> 붙이면 쿼리마다 대륙을 건넙니다. 페이지당 서너 번 왕복이면 0.2~0.3초 정도가
-> 붙습니다 — 내부 업무용으로는 견딜 수 있지만, 신경 쓰인다면 Neon 프로젝트를 동부에
-> 새로 만들고 데이터를 옮기는 편이 낫습니다.
+- **오레곤에서 접속하니 서부(`us-west-2`) 가 낫지 않나요?** 아닙니다. 사용자 ↔ 서버
+  왕복은 한 번이지만 서버 ↔ DB 왕복은 페이지당 여러 번입니다. 함수가 동부에 있는데
+  DB 를 서부에 두면 쿼리마다 대륙을 건너 가장 느려집니다.
+- 함수 리전 지정은 Netlify 유료 플랜 기능입니다. 기본 리전은 바뀔 수 있으니 필요하면
+  Netlify 문서에서 확인하세요.
 
 > 리전 목록은 Neon 콘솔에서 실제로 제공되는 것 중에 고르세요 (제공 리전은 바뀝니다).
 > 프로젝트를 만든 뒤에는 리전을 변경할 수 없으니, 생성 시점에 정해야 합니다.
@@ -205,9 +190,9 @@ npm run dev            # http://localhost:3000
 
 ## 6. 배포
 
-무료로 쓸 수 있는 곳은 Netlify 와 Vercel 둘 다입니다. 이 저장소에는
-**Netlify 설정(`netlify.toml`)이 들어 있습니다.** 어느 쪽이든 빌드에는
-데이터베이스 연결이 필요하지 않습니다.
+**Netlify 무료 플랜**에 올립니다. 빌드 설정은 저장소의 `netlify.toml` 에 들어
+있으므로 화면에서 따로 만질 것이 없습니다. 빌드에는 데이터베이스 연결이 필요하지
+않습니다.
 
 > **Cloudflare Pages / Workers 무료 플랜은 쓸 수 없습니다.** 비밀번호 해싱
 > (`src/lib/auth.ts` 의 bcrypt cost 12)에 요청당 0.7초 가까운 CPU 가 드는데, 무료
@@ -216,7 +201,7 @@ npm run dev            # http://localhost:3000
 > Cloudflare 로 가려면 유료 Workers 플랜을 쓰거나 해싱 방식을 바꿔야 하고, 후자는
 > 저장된 해시 형식이 달라져 전 사용자 비밀번호를 초기화해야 합니다.
 
-### 6-1. Netlify (이 저장소의 기본 설정)
+### 6-1. 처음 연결하기
 
 1. 이 폴더를 GitHub 저장소로 올립니다.
 2. Netlify 에서 **Add new site → Import an existing project** 로 저장소를 선택합니다.
@@ -244,18 +229,14 @@ npm run dev            # http://localhost:3000
 
 Node 버전은 `.nvmrc` (22) 를 Netlify 가 그대로 읽습니다.
 
-### 6-2. Vercel
+### 6-2. 이후 배포
 
-1. **New Project → Import** 로 저장소를 선택합니다.
-2. **Environment Variables** 에 위와 같은 두 개를 등록합니다 (Production / Preview 모두).
-3. **Settings → Functions → Function Region** 이 Neon 리전과 같은 곳인지 확인합니다
-   (5-1 의 표 참고). 기본값은 `iad1` 워싱턴 D.C. 입니다.
-4. **Deploy** 를 누릅니다.
+`main` 에 푸시하면 Netlify 가 자동으로 다시 빌드해 배포합니다. 다른 브랜치를 푸시하면
+미리보기 주소가 따로 생깁니다.
 
-`netlify.toml` 이 있어도 Vercel 배포에는 아무 영향이 없습니다 (서로 다른 파일을 읽습니다).
-
-> Vercel Marketplace 의 Neon 연동을 쓰면 `DATABASE_URL` 이 자동으로 주입되므로
-> 2번의 `DATABASE_URL` 등록을 생략할 수 있습니다.
+> **다른 곳에 올릴 수도 있습니다.** Node 런타임을 주는 곳이면 대체로 그대로 동작합니다
+> (Vercel 등). `netlify.toml` 은 Netlify 만 읽으므로 남겨 두어도 무해합니다. 옮길 때는
+> `DATABASE_URL` · `AUTH_SECRET` 두 환경 변수와 5-1 의 리전 조합만 챙기면 됩니다.
 
 ### 배포 후 스키마 변경
 
@@ -322,8 +303,8 @@ DK-11209 (62 × 29 mm) 와 DK-11204 (54 × 17 mm) 가 실물 크기로 나옵니
   자동으로 조회됩니다. 대부분의 스캐너가 키보드처럼 값을 입력하고 Enter 를 보내므로
   별도 설치나 설정이 필요하지 않습니다.
 - **휴대폰 카메라** — `/scan` 에서 **카메라로 스캔**. 카메라는 **https 또는 localhost**
-  에서만 동작합니다 (Vercel 배포 주소는 https 이므로 그대로 사용 가능).
-- **직접 입력** — 하이픈은 없어도 됩니다. `2611001` → `26-11001` 로 인식합니다.
+  에서만 동작합니다 (Netlify 배포 주소는 https 이므로 그대로 사용 가능).
+- **직접 입력** — 하이픈은 없어도 됩니다. `2601030001` → `26-0103-0001` 로 인식합니다.
 
 ---
 
