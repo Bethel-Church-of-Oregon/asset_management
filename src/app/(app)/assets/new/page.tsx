@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import AssetForm from '@/components/AssetForm';
-import { IconBack } from '@/components/icons';
 import { requireSession } from '@/lib/auth';
 import { canEdit } from '@/lib/session';
 import { getLookups } from '@/lib/queries';
@@ -49,16 +48,14 @@ export default async function NewAssetPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Link href="/assets" className="btn-secondary !px-2.5" aria-label="자산 목록으로">
-          <IconBack />
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">자산 등록</h1>
-          <p className="mt-0.5 text-sm text-slate-500">
-            자산번호는 선택한 항목에 따라 자동으로 만들어집니다.
-          </p>
-        </div>
+      {/* 뒤로 가기 화살표는 두지 않습니다 — 폼 아래 '취소' 가 이미 자산 목록으로
+          돌아가고, 상단 메뉴 탭으로 바로 들어오는 경로도 있어 가리킬 곳이 하나가
+          아닙니다. */}
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">자산 등록</h1>
+        <p className="mt-0.5 text-sm text-slate-500">
+          자산번호는 선택한 항목에 따라 자동으로 만들어집니다.
+        </p>
       </div>
 
       {params.saved ? (
