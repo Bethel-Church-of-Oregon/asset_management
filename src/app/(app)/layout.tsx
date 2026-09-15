@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { logoutAction } from '@/actions/auth';
 import Nav, { type NavItem } from '@/components/Nav';
+import ScanFab from '@/components/ScanFab';
 import {
   IconDashboard,
   IconList,
@@ -20,7 +21,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const items: NavItem[] = [
     { href: '/', label: '대시보드', icon: <IconDashboard /> },
     { href: '/assets', label: '자산목록', icon: <IconList /> },
-    { href: '/scan', label: '스캔 · 조회', icon: <IconScan /> },
+    // 카메라로 찍는 동작이라 PC 메뉴에서는 감춥니다 — 주소는 그대로 열립니다
+    // (USB 바코드 스캐너를 PC 에 꽂아 쓰는 경우를 막지 않기 위해서입니다).
+    { href: '/scan', label: '스캔 · 조회', icon: <IconScan />, mobileOnly: true },
   ];
   if (canEdit(session.role)) {
     items.splice(2, 0, { href: '/assets/new', label: '자산등록', icon: <IconPlus /> });
@@ -81,10 +84,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
 
-      <footer className="no-print mx-auto max-w-7xl px-4 pb-10 text-xs text-slate-400 sm:px-6">
+      <footer className="no-print mx-auto max-w-7xl px-4 pb-10 text-xs text-slate-400 touch:pb-28 sm:px-6">
         자산번호 형식: <span className="mono">YY-BBDD-SSSS</span> · 연도(2) · 건물(2) · 부서(2) ·
         고유번호(4) · 예) <span className="mono">{EXAMPLE_ASSET_NO}</span>
       </footer>
+
+      <ScanFab />
     </div>
   );
 }

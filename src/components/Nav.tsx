@@ -3,7 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export type NavItem = { href: string; label: string; icon: React.ReactNode };
+export type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  /** 손으로 쓰는 기기에서만 보이는 항목. 주소는 PC 에서도 그대로 열립니다. */
+  mobileOnly?: boolean;
+};
 
 function isActive(pathname: string, href: string): boolean {
   if (href === '/') return pathname === '/';
@@ -27,7 +33,7 @@ export default function Nav({ items }: { items: NavItem[] }) {
               active
                 ? 'border-brand-600 text-brand-700'
                 : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'
-            }`}
+            }${item.mobileOnly ? ' mouse:hidden' : ''}`}
           >
             <span className="text-slate-400" aria-hidden="true">
               {item.icon}

@@ -89,6 +89,22 @@ CLI 스크립트(seed)는 `server-only` 가 없는 `src/db/client.ts` 를 쓴다
 | 로그인 아이디 | `src/lib/username.ts` | `LoginForm`, `UserManager`, `actions/auth.ts`, `actions/settings.ts`, `db/seed.ts`, `db/add-username.ts`, `db/doctor.ts`, `db/set-password.ts` |
 | unique 위반 판정 | `src/lib/db-errors.ts` | `actions/assets.ts`, `actions/settings.ts` |
 
+## 모바일 · PC 구분은 입력 방식으로
+
+창 너비로 나누지 않는다. 아이패드 가로는 1024px 이라 `md:` 기준에서 PC 로 잡히고,
+PC 창을 좁히면 모바일로 잡힌다. 판정은 `tailwind.config.ts` 의 커스텀 스크린
+두 개로만 한다 — `touch` (`(hover: none), (pointer: coarse)`) 와 `mouse`
+(`(hover: hover) and (pointer: fine)`). 둘은 서로의 정확한 여집합이다.
+
+- 스캔 메뉴 탭: `NavItem.mobileOnly` → `mouse:hidden` (`src/components/Nav.tsx`)
+- 하단 스캔 버튼: `src/components/ScanFab.tsx` — 기본 `hidden` + `touch:flex`
+
+**감추는 것은 메뉴뿐이고 `/scan` 주소는 PC 에서도 그대로 열린다.** USB 바코드
+스캐너는 키보드처럼 입력하는 장치라 오히려 PC 워크플로다 — 막지 않는다.
+
+고정 버튼은 `sticky bottom-0` 푸터가 있는 화면(`/assets/new`, `/assets/:id/edit`)에서는
+`ScanFab` 의 `HIDDEN_ON` 으로 숨긴다. 겹치면 저장 버튼을 가린다.
+
 ## 자산번호 형식
 
 `YY-BBDD-SSSS` — 연도 2 · 건물 2 · 부서 2 · 고유번호 4자리, 모두 0 으로 채운다.
