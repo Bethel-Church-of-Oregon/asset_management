@@ -18,15 +18,19 @@ import { ROLE_LABELS, canAdmin, canEdit } from '@/lib/session';
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
 
+  // 스캔만 기기에 따라 다릅니다 — 카메라로 찍는 동작이라 PC 메뉴에서는 감춥니다.
+  // 나머지는 PC·모바일 양쪽에 그대로 둡니다. 주소는 어디서든 열립니다
+  // (USB 바코드 스캐너를 PC 에 꽂아 쓰는 경우를 막지 않기 위해서입니다).
+  //
+  // 스캔은 모바일에서 가장 자주 쓰는 메뉴라 대시보드 바로 다음에 둡니다.
+  // PC 에서는 이 항목이 숨겨지므로 나머지 순서는 그대로입니다.
   const items: NavItem[] = [
     { href: '/', label: '대시보드', icon: <IconDashboard /> },
+    { href: '/scan', label: '스캔 · 조회', icon: <IconScan />, only: 'touch' },
     { href: '/assets', label: '자산목록', icon: <IconList /> },
-    // 카메라로 찍는 동작이라 PC 메뉴에서는 감춥니다 — 주소는 그대로 열립니다
-    // (USB 바코드 스캐너를 PC 에 꽂아 쓰는 경우를 막지 않기 위해서입니다).
-    { href: '/scan', label: '스캔 · 조회', icon: <IconScan />, mobileOnly: true },
   ];
   if (canEdit(session.role)) {
-    items.splice(2, 0, { href: '/assets/new', label: '자산등록', icon: <IconPlus /> });
+    items.push({ href: '/assets/new', label: '자산등록', icon: <IconPlus /> });
   }
   if (canAdmin(session.role)) {
     items.push({ href: '/settings', label: '설정', icon: <IconSettings /> });

@@ -96,7 +96,11 @@ PC 창을 좁히면 모바일로 잡힌다. 판정은 `tailwind.config.ts` 의 �
 두 개로만 한다 — `touch` (`(hover: none), (pointer: coarse)`) 와 `mouse`
 (`(hover: hover) and (pointer: fine)`). 둘은 서로의 정확한 여집합이다.
 
-- 스캔 메뉴 탭: `NavItem.mobileOnly` → `mouse:hidden` (`src/components/Nav.tsx`)
+기기에 따라 다른 것은 **스캔 하나뿐**이다 (`NavItem.only` → `src/components/Nav.tsx`).
+나머지 메뉴는 PC·모바일 양쪽에 그대로 둔다 — 모바일에서 스캔만 남겼더니 로그인
+직후 도착하는 대시보드가 메뉴에 없는 화면이 되어 되돌렸다.
+
+- 스캔 · 조회: `only: 'touch'` → `mouse:hidden` (PC 에서만 숨김)
 - 하단 스캔 버튼: `src/components/ScanFab.tsx` — 기본 `hidden` + `touch:flex`
 
 **감추는 것은 메뉴뿐이고 `/scan` 주소는 PC 에서도 그대로 열린다.** USB 바코드

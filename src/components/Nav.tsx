@@ -7,8 +7,17 @@ export type NavItem = {
   href: string;
   label: string;
   icon: React.ReactNode;
-  /** 손으로 쓰는 기기에서만 보이는 항목. 주소는 PC 에서도 그대로 열립니다. */
-  mobileOnly?: boolean;
+  /**
+   * 어느 기기에서만 메뉴에 보일지. 없으면 항상 보입니다.
+   * `tailwind.config.ts` 의 `touch` / `mouse` 커스텀 스크린과 같은 기준입니다.
+   * **감추는 것은 메뉴뿐이고 주소는 어디서든 그대로 열립니다.**
+   */
+  only?: 'touch' | 'mouse';
+};
+
+const ONLY_CLASS: Record<'touch' | 'mouse', string> = {
+  touch: ' mouse:hidden',
+  mouse: ' touch:hidden',
 };
 
 function isActive(pathname: string, href: string): boolean {
@@ -33,7 +42,7 @@ export default function Nav({ items }: { items: NavItem[] }) {
               active
                 ? 'border-brand-600 text-brand-700'
                 : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'
-            }${item.mobileOnly ? ' mouse:hidden' : ''}`}
+            }${item.only ? ONLY_CLASS[item.only] : ''}`}
           >
             <span className="text-slate-400" aria-hidden="true">
               {item.icon}
