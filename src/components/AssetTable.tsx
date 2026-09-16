@@ -51,7 +51,9 @@ export default function AssetTable({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-sm text-slate-600">
-          검색 결과 <span className="mono font-semibold text-slate-900">{total.toLocaleString('ko-KR')}</span>건
+          검색 결과{' '}
+          <span className="mono font-semibold text-slate-900">{total.toLocaleString('ko-KR')}</span>
+          건
           {selectedIds.length > 0 ? (
             <>
               {' · '}
@@ -74,14 +76,18 @@ export default function AssetTable({
           </a>
           <Link href={labelHref} className="btn-primary !py-1.5 text-xs">
             <IconPrinter />
-            {selectedIds.length > 0 ? `선택 ${selectedIds.length}건 라벨 출력` : '검색 결과 전체 라벨 출력'}
+            {selectedIds.length > 0
+              ? `선택 ${selectedIds.length}건 라벨 출력`
+              : '검색 결과 전체 라벨 출력'}
           </Link>
         </div>
       </div>
 
       {/* ── 데스크톱: 표 ─────────────────────────────────────────────────── */}
       <div className="card hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[860px] text-sm">
+        {/* 768~1023px 에서는 모델·취득일 칸을 감추므로 최소 너비도 함께 줄입니다.
+            860px 을 그대로 두면 이 구간에서 가로 스크롤이 생깁니다. */}
+        <table className="w-full min-w-[640px] text-sm lg:min-w-[860px]">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600">
               <th className="w-10 px-3 py-2.5">
@@ -95,12 +101,12 @@ export default function AssetTable({
               </th>
               <th className="px-3 py-2.5">자산번호</th>
               <th className="px-3 py-2.5">자산명</th>
-              <th className="px-3 py-2.5">관리 팀 / 부서</th>
+              <th className="px-3 py-2.5">관리팀 / 부서</th>
               <th className="px-3 py-2.5">장소</th>
-              <th className="px-3 py-2.5">모델 / S/N</th>
+              <th className="hidden px-3 py-2.5 lg:table-cell">모델 / S/N</th>
               <th className="px-3 py-2.5 text-right">취득가액</th>
-              <th className="px-3 py-2.5">취득일</th>
-              <th className="px-3 py-2.5">상태</th>
+              <th className="hidden px-3 py-2.5 lg:table-cell">취득일</th>
+              <th className="whitespace-nowrap px-3 py-2.5">상태</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -120,7 +126,7 @@ export default function AssetTable({
                     aria-label={`${row.assetNo} 선택`}
                   />
                 </td>
-                <td className="px-3 py-2.5">
+                <td className="whitespace-nowrap px-3 py-2.5">
                   <Link
                     href={`/assets/${row.id}`}
                     className="mono font-semibold text-brand-700 hover:underline"
@@ -129,32 +135,38 @@ export default function AssetTable({
                   </Link>
                 </td>
                 <td className="max-w-[16rem] px-3 py-2.5">
-                  <Link href={`/assets/${row.id}`} className="block truncate text-slate-900 hover:underline">
+                  <Link
+                    href={`/assets/${row.id}`}
+                    className="block truncate text-slate-900 hover:underline"
+                  >
                     {row.name}
                   </Link>
                   {row.quantity > 1 ? (
                     <span className="mono text-xs text-slate-500">수량 {row.quantity}</span>
                   ) : null}
                 </td>
-                <td className="max-w-[12rem] truncate px-3 py-2.5 text-slate-600">
+                {/* truncate 는 white-space: nowrap 을 포함해서, 표가 이 글자의 전체
+                    폭을 요구하게 만듭니다. 말줄임이 되는 게 아니라 표가 밀려
+                    768~875px 에서 가로 스크롤이 생겼습니다. 줄을 바꾸게 둡니다. */}
+                <td className="max-w-[12rem] px-3 py-2.5 text-slate-600">
                   {row.teamName ?? row.deptName ?? '—'}
                 </td>
-                <td className="max-w-[12rem] truncate px-3 py-2.5 text-slate-600">
+                <td className="max-w-[12rem] px-3 py-2.5 text-slate-600">
                   {row.location ?? row.buildingName ?? '—'}
                 </td>
-                <td className="max-w-[12rem] px-3 py-2.5 text-xs text-slate-600">
+                <td className="hidden max-w-[12rem] px-3 py-2.5 text-xs text-slate-600 lg:table-cell">
                   <div className="truncate">{row.modelName ?? '—'}</div>
                   {row.serialNo ? (
                     <div className="mono truncate text-slate-400">{row.serialNo}</div>
                   ) : null}
                 </td>
-                <td className="mono px-3 py-2.5 text-right text-slate-700">
+                <td className="mono whitespace-nowrap px-3 py-2.5 text-right text-slate-700">
                   {formatMoney(row.acquiredPrice) || '—'}
                 </td>
-                <td className="mono px-3 py-2.5 text-xs text-slate-600">
+                <td className="mono hidden px-3 py-2.5 text-xs text-slate-600 lg:table-cell">
                   {row.acquiredDate ? formatDate(row.acquiredDate) : '—'}
                 </td>
-                <td className="px-3 py-2.5">
+                <td className="whitespace-nowrap px-3 py-2.5">
                   <StatusBadge status={row.status} />
                 </td>
               </tr>
@@ -166,7 +178,10 @@ export default function AssetTable({
       {/* ── 모바일: 카드 ─────────────────────────────────────────────────── */}
       <ul className="space-y-2 md:hidden">
         {rows.map((row) => (
-          <li key={row.id} className={`card p-3 ${selected.has(row.id) ? 'ring-1 ring-brand-300' : ''}`}>
+          <li
+            key={row.id}
+            className={`card p-3 ${selected.has(row.id) ? 'ring-1 ring-brand-300' : ''}`}
+          >
             <div className="flex items-start gap-3">
               <input
                 type="checkbox"
