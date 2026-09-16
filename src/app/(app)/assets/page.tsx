@@ -57,19 +57,13 @@ export default async function AssetsPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">자산 목록</h1>
-          <p className="mt-0.5 text-sm text-slate-500">
-            검색·필터 후 라벨을 일괄 출력하거나 CSV 로 내려받을 수 있습니다.
-          </p>
-        </div>
-        {canEdit(session.role) ? (
-          <Link href="/assets/new" className="btn-primary ml-auto">
-            <IconPlus />
-            자산 등록
-          </Link>
-        ) : null}
+      {/* 등록 버튼은 두지 않습니다 — 상단 메뉴의 '자산등록' 과 겹칩니다.
+          자산이 하나도 없을 때의 빈 화면 버튼은 아래에 그대로 둡니다. */}
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">자산 목록</h1>
+        <p className="mt-0.5 text-sm text-slate-500">
+          검색·필터 후 라벨을 일괄 출력하거나 CSV 로 내려받을 수 있습니다.
+        </p>
       </div>
 
       {params.deleted === '1' ? (
