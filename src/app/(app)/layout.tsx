@@ -81,7 +81,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        {/* 위 줄(기관명·계정·로그아웃)과 메뉴 줄이 붙어 보이지 않도록 한 칸 띄웁니다. */}
+        <div className="mx-auto mt-2 max-w-7xl px-4 sm:px-6">
           <Nav items={items} />
         </div>
       </header>
