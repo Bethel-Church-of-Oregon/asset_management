@@ -149,7 +149,7 @@ export default async function AssetDetailPage({
             <Row label="관리부서">
               {asset.deptName ? `${asset.deptCode} · ${asset.deptName}` : asset.deptCode}
             </Row>
-            <Row label="관리 팀명">{asset.teamName}</Row>
+            <Row label="관리팀명">{asset.teamName}</Row>
             <Row label="건물 / 위치">
               {asset.buildingName
                 ? `${asset.buildingCode} · ${asset.buildingName}`

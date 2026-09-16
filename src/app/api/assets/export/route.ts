@@ -8,7 +8,7 @@ const COLUMNS: { key: string; header: string }[] = [
   { key: 'assetNo', header: '자산번호' },
   { key: 'name', header: '자산명' },
   { key: 'deptName', header: '관리부서' },
-  { key: 'teamName', header: '관리 팀명' },
+  { key: 'teamName', header: '관리팀명' },
   { key: 'buildingName', header: '건물/위치' },
   { key: 'location', header: '설치/보관 장소' },
   { key: 'acquiredDate', header: '취득일자' },

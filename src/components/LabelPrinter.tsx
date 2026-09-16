@@ -297,7 +297,7 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
               onChange={(v) => setContent('showLocation', v)}
             />
             <Check
-              label="관리 팀명"
+              label="관리팀명"
               checked={content.showTeam}
               onChange={(v) => setContent('showTeam', v)}
             />
