@@ -4,6 +4,10 @@
 
 :root {
   color-scheme: light;
+
+  /* 곡률 기준값. 카드는 이 값, 버튼·입력란은 2px 작게 (tailwind.config.ts 참고).
+     색은 건드리지 않습니다 — slate 계열과 브랜드 블루를 그대로 씁니다. */
+  --radius: 0.625rem;
 }
 
 @layer base {
@@ -44,7 +48,7 @@
   }
 
   .field-input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900
+    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900
       shadow-sm outline-none transition
       placeholder:text-slate-400
       focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25
@@ -56,7 +60,7 @@
   }
 
   .btn {
-    @apply inline-flex select-none items-center justify-center gap-1.5 rounded-lg px-3.5 py-2
+    @apply inline-flex select-none items-center justify-center gap-1.5 rounded-md px-3.5 py-2
       text-sm font-semibold transition
       focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
       disabled:cursor-not-allowed disabled:opacity-50;
@@ -78,7 +82,7 @@
   }
 
   .card {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    @apply rounded-lg border border-slate-200 bg-white shadow-sm;
   }
 
   .badge {

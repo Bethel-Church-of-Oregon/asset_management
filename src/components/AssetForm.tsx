@@ -215,7 +215,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
                 </Field>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center lg:w-64">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center lg:w-64">
                 <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   자산번호
                 </div>

@@ -166,7 +166,7 @@ export default function ScanBox({ initialValue = '' }: { initialValue?: string }
       <div
         className={
           camera === 'running' || camera === 'starting'
-            ? 'overflow-hidden rounded-xl border border-slate-300 bg-black'
+            ? 'overflow-hidden rounded-lg border border-slate-300 bg-black'
             : 'hidden'
         }
       >

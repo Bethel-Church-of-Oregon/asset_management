@@ -17,6 +17,16 @@ export default {
         touch: { raw: '(hover: none), (pointer: coarse)' },
         mouse: { raw: '(hover: hover) and (pointer: fine)' },
       },
+      /**
+       * 곡률은 `globals.css` 의 `--radius` 하나에서 파생합니다 — 카드는 그 값,
+       * 버튼·입력란은 2px 작게. 화면마다 감으로 고르던 것을 한 곳으로 모읍니다.
+       * `rounded` 기본값(4px)은 건드리지 않습니다 — 라벨 셀이 쓰고 있습니다.
+       */
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
       colors: {
         brand: {
           50: '#eef4ff',
