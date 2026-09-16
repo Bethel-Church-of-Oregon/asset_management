@@ -259,7 +259,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
 
         {/* hint 를 두지 않습니다 — 입력칸 안내문(placeholder)과 같은 말이 되고,
             선택한 부서는 바로 위 '관리부서' 칸에 이미 보입니다. */}
-        <Field label="관리부서 및 팀명" htmlFor="teamName" error={errors.teamName}>
+        <Field label="관리팀명" htmlFor="teamName" error={errors.teamName}>
           <input
             id="teamName"
             name="teamName"
