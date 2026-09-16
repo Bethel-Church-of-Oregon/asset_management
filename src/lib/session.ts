@@ -2,7 +2,11 @@
  * Session token handling. Kept free of Node-only imports (no bcrypt, no `pg`)
  * so middleware can verify sessions on the Edge runtime.
  */
-import { jwtVerify, SignJWT } from 'jose';
+// `jose` 최상위(배럴)에서 가져오면 JWE 복호화 경로까지 딸려 들어와, Edge 런타임에
+// 없는 `CompressionStream` 을 쓴다는 빌드 경고가 납니다. 이 앱은 서명(JWS)만 쓰므로
+// 필요한 두 개만 하위 경로에서 직접 가져옵니다.
+import { SignJWT } from 'jose/jwt/sign';
+import { jwtVerify } from 'jose/jwt/verify';
 import type { UserRole } from '@/db/schema';
 
 export const SESSION_COOKIE = 'cam_session';
