@@ -44,13 +44,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-slate-900">대시보드</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          자산 현황을 한눈에 봅니다. 바코드 스캔과 번호 조회는 상단 메뉴의{' '}
-          <Link href="/scan" className="font-semibold text-brand-700">
-            스캔 · 조회
-          </Link>
-          에서 할 수 있습니다.
-        </p>
+        <p className="mt-1 text-sm text-slate-500">자산 현황을 한눈에 봅니다.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
