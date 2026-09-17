@@ -496,7 +496,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
 
         {mode === 'create' ? (
           <p className="mt-2 text-xs text-slate-500">
-            &lsquo;저장 후 다음 자산 등록&rsquo; 은 추후에 바코드 출력이 가능합니다.
+            &lsquo;저장 후 다음 자산 등록&rsquo; 은 추후에 바코드 일괄 출력이 가능합니다.
           </p>
         ) : null}
       </div>
