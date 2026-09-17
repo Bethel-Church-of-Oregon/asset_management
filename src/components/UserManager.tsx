@@ -126,19 +126,22 @@ function UserRow({ user, isSelf }: { user: UserRowData; isSelf: boolean }) {
             <FormError>{state.fieldErrors?.name}</FormError>
           </div>
 
-          <select
-            name="role"
-            defaultValue={user.role}
-            className="field-input !py-1.5"
-            aria-label="권한"
-            disabled={isSelf}
-          >
-            {ROLE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <div>
+            <select
+              name="role"
+              defaultValue={user.role}
+              className="field-input !py-1.5"
+              aria-label="권한"
+              disabled={isSelf}
+            >
+              {ROLE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <FormError>{state.fieldErrors?.role}</FormError>
+          </div>
 
           <label className="flex items-center gap-1.5 text-xs text-slate-600">
             <input

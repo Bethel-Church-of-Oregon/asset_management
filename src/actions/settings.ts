@@ -212,7 +212,11 @@ export async function updateUserAction(_prev: FormState, formData: FormData): Pr
           .transform(cleanUsername)
           .refine(isUsername, `아이디는 ${USERNAME_RULE_TEXT} 여야 합니다.`),
         name: z.string().trim().min(1, '이름을 입력하세요.').max(100),
-        role: z.enum(USER_ROLES),
+        // 본인 행에서는 화면의 권한·사용 여부 입력이 잠겨 있고, **잠긴 입력은
+        // 브라우저가 전송하지 않습니다.** 필수로 읽으면 이름만 바꾸려 해도
+        // 검증에서 막힙니다. `formData.get` 은 없을 때 `undefined` 가 아니라
+        // `null` 을 주므로 `optional()` 이 아니라 `nullish()` 여야 합니다.
+        role: z.enum(USER_ROLES).nullish(),
         isActive: z.boolean(),
         password: z
           .string()
@@ -232,31 +236,27 @@ export async function updateUserAction(_prev: FormState, formData: FormData): Pr
       return { ok: false, fieldErrors: zodToFieldErrors(parsed.error.issues) };
     }
     const { id, username, name, role, isActive, password } = parsed.data;
+    const isSelf = id === session.userId;
 
-    // Guard against an admin locking themselves — and possibly everyone — out.
-    if (id === session.userId && (!isActive || role !== 'admin')) {
-      return {
-        ok: false,
-        error: '본인의 관리자 권한이나 사용 여부는 변경할 수 없습니다.',
-      };
+    // 본인의 권한·사용 여부는 아예 건드리지 않습니다. 화면에서 잠가 두는 것만으로는
+    // 부족합니다 — 보내온 값으로 판단하면 잠긴 입력이 오지 않아 저장이 막히고,
+    // 반대로 위조한 요청이 값을 보내오면 스스로 권한을 올리거나 계정을 잠글 수
+    // 있습니다. 저장 대상에서 빼 두면 두 경우 모두 막힙니다.
+    const changes: Partial<typeof users.$inferInsert> = { username, name };
+    if (!isSelf) {
+      if (!role) return { ok: false, fieldErrors: { role: '권한을 선택하세요.' } };
+      changes.role = role;
+      changes.isActive = isActive;
     }
+    if (password) changes.passwordHash = await hashPassword(password);
 
-    await db
-      .update(users)
-      .set({
-        username,
-        name,
-        role,
-        isActive,
-        ...(password ? { passwordHash: await hashPassword(password) } : {}),
-      })
-      .where(eq(users.id, id));
+    await db.update(users).set(changes).where(eq(users.id, id));
 
     revalidatePath('/settings');
     const notes = [
       password ? '비밀번호가 변경되었습니다.' : '',
-      // 세션에는 로그인 당시의 아이디가 들어 있어 화면 표기가 잠깐 어긋날 수 있습니다.
-      id === session.userId ? '바뀐 아이디는 다시 로그인할 때부터 쓰입니다.' : '',
+      // 세션에는 로그인 당시의 아이디·이름이 들어 있어 화면 표기가 잠깐 어긋납니다.
+      isSelf ? '바뀐 아이디와 이름은 다시 로그인할 때부터 화면에 보입니다.' : '',
     ].filter(Boolean);
     return { ok: true, message: ['저장되었습니다.', ...notes].join(' ') };
   } catch (error) {
