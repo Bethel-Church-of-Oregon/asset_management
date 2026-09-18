@@ -23,7 +23,9 @@
     @apply bg-slate-100 text-slate-900 antialiased;
   }
 
-  /* Native controls should not zoom the viewport on iOS. */
+  /* 클래스가 붙지 않은 기본 컨트롤의 글자 크기를 브라우저 기본값에서 맞춰 둡니다.
+     iOS 확대를 막는 것은 이 규칙이 아니라 파일 끝의 `touch` 가드입니다 —
+     `.field-input` · `.btn` 이 뒤 레이어에서 이 값을 덮습니다. */
   input,
   select,
   textarea,
@@ -92,6 +94,28 @@
   .mono {
     font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── iOS 입력칸 확대 방지 ─────────────────────────────────────────────────── */
+/*
+ * iOS Safari 는 글자가 16px 보다 작은 입력칸을 탭하면 화면을 확대하고, 폼을 보내고
+ * 넘어간 다음 화면까지 확대된 채로 둡니다 — 로그인 후 대시보드가 화면 밖으로
+ * 삐져나가 보이던 원인입니다.
+ *
+ * 레이어 밖 · 파일 끝에 두는 이유: `.field-input` (components) 과 `text-sm`
+ * (utilities) 이 base 레이어보다 뒤에 와서 이깁니다. 순서만으로는 부족하고
+ * 클래스(0,1,0)보다 높은 특정도가 필요해서 `:not()` 을 하나씩 답니다 —
+ * 체크박스·라디오는 확대 대상이 아니고, `hidden` 은 포커스가 가지 않습니다.
+ *
+ * 손으로 쓰는 기기에서만 키웁니다 — PC 는 지금의 14px 을 그대로 씁니다.
+ * 조건은 `tailwind.config.ts` 의 `touch` 스크린과 같습니다.
+ */
+@media (hover: none), (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']),
+  select:not([hidden]),
+  textarea:not([hidden]) {
+    font-size: 16px;
   }
 }
 
