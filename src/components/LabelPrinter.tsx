@@ -223,7 +223,9 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
               ) : null}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:col-span-2 lg:grid-cols-5">
+            {/* 칸이 6개라 lg(1024px)에서는 마지막 "글자 크기 배율" 이 다음 줄로
+                밀립니다. `wide`(1036px) 부터 6열로 펴서 한 줄에 담습니다. */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:col-span-2 lg:grid-cols-5 wide:grid-cols-6">
               <NumField
                 label="가로 (mm)"
                 value={layout.widthMm}

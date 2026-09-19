@@ -16,6 +16,16 @@ export default {
       screens: {
         touch: { raw: '(hover: none), (pointer: coarse)' },
         mouse: { raw: '(hover: hover) and (pointer: fine)' },
+        /**
+         * 순수한 **레이아웃** 브레이크포인트다 — 위 두 개와 달리 기기를 나누는
+         * 용도가 아니다. 라벨 설정의 치수 입력칸 6개가 `lg`(1024px)에서는 한 줄에
+         * 안 들어가고 마지막 칸이 밀려서, 1036px 부터 6열로 편다.
+         *
+         * `min-[1036px]:` 임의 변형을 쓰지 못하는 이유: 위 `raw` 스크린이 있으면
+         * Tailwind 가 미디어쿼리 정렬을 못 해 임의 min-width 변형을 **조용히
+         * 생성하지 않는다**(3.4.19 확인). 이름 있는 스크린은 정상 동작한다.
+         */
+        wide: '1036px',
       },
       /**
        * 곡률은 `globals.css` 의 `--radius` 하나에서 파생합니다 — 카드는 그 값,
