@@ -127,12 +127,12 @@ export default async function ScanPage({
           <h2 className="mb-2 text-sm font-bold text-slate-900">사용 방법</h2>
           <ul className="space-y-2 text-sm leading-relaxed text-slate-600">
             <li>
-              <strong className="text-slate-800">USB / 블루투스 스캐너</strong> — 입력창을 한 번
-              클릭해 두면, 스캔할 때마다 자동으로 조회됩니다. 별도 설치나 설정이 필요하지 않습니다.
-            </li>
-            <li>
               <strong className="text-slate-800">휴대폰 카메라</strong> — &lsquo;카메라로
               스캔&rsquo;을 누르고 QR 을 비추세요.
+            </li>
+            <li>
+              <strong className="text-slate-800">USB / 블루투스 스캐너</strong> — 입력창을 한 번
+              클릭해 두면, 스캔할 때마다 자동으로 조회됩니다. 별도 설치나 설정이 필요하지 않습니다.
             </li>
             <li>
               <strong className="text-slate-800">직접 입력</strong> — 하이픈은 넣지 않아도 됩니다.
