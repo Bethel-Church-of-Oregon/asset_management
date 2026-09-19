@@ -15,8 +15,16 @@ export type LabelLayout = {
   /** 라벨 1칸의 크기 (mm) */
   widthMm: number;
   heightMm: number;
-  /** 라벨 내부 여백 (mm) */
+  /** 라벨 내부 여백 (mm) — 위·아래·오른쪽 */
   paddingMm: number;
+  /**
+   * 왼쪽 내부 여백 (mm).
+   *
+   * 가로는 왼쪽 정렬이라 이 값이 QR 이 시작하는 자리를 정합니다. `paddingMm` 과
+   * 따로 두는 이유는, 세로가 빠듯한 라벨(DK-11204 는 높이 17mm 에 QR 15mm)에서
+   * 사방에 같은 여백을 주면 QR 이 찌그러지기 때문입니다.
+   */
+  paddingLeftMm: number;
   /** sheet 전용: 칸 배치 */
   cols: number;
   rows: number;
@@ -47,6 +55,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 62,
     heightMm: 29,
     paddingMm: 2.5,
+    paddingLeftMm: 2.5,
     qrSizeMm: 21,
     fontScale: 1.15,
     cols: 1,
@@ -64,6 +73,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 90,
     heightMm: 29,
     paddingMm: 2.5,
+    paddingLeftMm: 2.5,
     qrSizeMm: 21,
     fontScale: 1.25,
     cols: 1,
@@ -81,6 +91,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 54,
     heightMm: 17,
     paddingMm: 0.5,
+    paddingLeftMm: 6.5,
     qrSizeMm: 15,
     fontScale: 1.2,
     cols: 1,
@@ -98,6 +109,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 50,
     heightMm: 25,
     paddingMm: 2,
+    paddingLeftMm: 2,
     qrSizeMm: 18,
     fontScale: 1,
     cols: 1,
@@ -115,6 +127,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 54,
     heightMm: 25,
     paddingMm: 2,
+    paddingLeftMm: 2,
     qrSizeMm: 18,
     fontScale: 1,
     cols: 1,
@@ -132,6 +145,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 70,
     heightMm: 38,
     paddingMm: 3,
+    paddingLeftMm: 3,
     qrSizeMm: 27,
     fontScale: 1.3,
     cols: 1,
@@ -149,6 +163,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 40,
     heightMm: 20,
     paddingMm: 1.5,
+    paddingLeftMm: 1.5,
     qrSizeMm: 14,
     fontScale: 0.85,
     cols: 1,
@@ -166,6 +181,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 64.6,
     heightMm: 33.8,
     paddingMm: 2.5,
+    paddingLeftMm: 2.5,
     qrSizeMm: 24,
     fontScale: 1.1,
     cols: 3,
@@ -183,6 +199,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 63.5,
     heightMm: 38.1,
     paddingMm: 3,
+    paddingLeftMm: 3,
     qrSizeMm: 27,
     fontScale: 1.15,
     cols: 3,
@@ -200,6 +217,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 99.1,
     heightMm: 42.3,
     paddingMm: 3,
+    paddingLeftMm: 3,
     qrSizeMm: 30,
     fontScale: 1.4,
     cols: 2,
@@ -233,6 +251,7 @@ export function presetToLayout(preset: LabelPreset): LabelLayout {
     widthMm: preset.widthMm,
     heightMm: preset.heightMm,
     paddingMm: preset.paddingMm,
+    paddingLeftMm: preset.paddingLeftMm,
     cols: preset.cols,
     rows: preset.rows,
     pageMarginTopMm: preset.pageMarginTopMm,
@@ -258,11 +277,11 @@ export type LabelContent = {
 };
 
 /**
- * 자산번호와 자산명은 **같은 크기**로 둡니다.
+ * 본문 세 줄 — 자산번호 · 자산명 · 장소/팀명/취득일 — 은 **모두 같은 크기**입니다.
  *
- * 둘을 한 상수로 묶어 두는 이유는, 한쪽만 고쳐서 크기가 어긋나는 일을 막기
- * 위해서입니다 (단위테스트도 같은지 확인합니다). 번호와 이름은 `mono` 여부와
- * 자간으로 구분되므로 크기까지 다르게 할 필요가 없습니다.
+ * 한 상수로 묶어 두는 이유는 한쪽만 고쳐서 크기가 어긋나는 일을 막기 위해서입니다
+ * (단위테스트도 같은지 확인합니다). 번호는 `mono` 여부와 자간으로 구분되므로
+ * 크기까지 다르게 할 필요가 없습니다.
  */
 const BODY_PT = 6.5;
 
@@ -276,7 +295,7 @@ export const FONT_BASE_PT = {
   churchName: 5,
   assetNo: BODY_PT,
   name: BODY_PT,
-  meta: 5.5,
+  meta: BODY_PT,
 } as const;
 
 /**

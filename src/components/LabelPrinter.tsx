@@ -19,7 +19,6 @@ import {
   presetContentDefaults,
   presetToLayout,
   qrGapMm,
-  qrQuietZoneMm,
   sheetCapacity,
 } from '@/lib/labels';
 import { formatDate } from '@/lib/format';
@@ -250,6 +249,14 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
                 onChange={(v) => setLayout('paddingMm', v)}
               />
               <NumField
+                label="왼쪽 여백 (mm)"
+                value={layout.paddingLeftMm}
+                step={0.5}
+                min={0}
+                max={30}
+                onChange={(v) => setLayout('paddingLeftMm', v)}
+              />
+              <NumField
                 label="QR 크기 (mm)"
                 value={content.qrSizeMm}
                 step={0.5}
@@ -472,21 +479,19 @@ function LabelCell({
   // 왼쪽 QR · 오른쪽 글자. 줄 간격과 칸 사이 간격은 `measureContentFit` 과
   // 같은 상수를 써야 넘침 경고가 거짓말을 하지 않습니다.
   //
-  // `justify-center` 로 **QR + 글자 덩어리를 통째로 가운데** 놓습니다. 글자 칸을
-  // `flex-1` 로 늘리면 덩어리가 왼쪽에 붙고 오른쪽만 비어 보입니다. 대신 글자
-  // 칸은 내용 너비로 두되 `min-w-0` 으로 줄어들 수 있게 해서, 이름이 길면
+  // 가로는 **왼쪽 정렬**입니다. 가운데 정렬은 내용 길이에 따라 좌우 여백이
+  // 들쭉날쭉해서(자산명 한 글자에 1mm씩 움직였습니다) 왼쪽 고정으로 되돌렸습니다.
+  // 글자 칸은 내용 너비로 두되 `min-w-0` 으로 줄어들 수 있게 해서, 이름이 길면
   // 넘치지 않고 잘립니다. 각 줄은 같은 칸 안에 있으므로 왼쪽이 맞습니다.
   return (
     <div
-      className="label-cell flex items-center justify-center overflow-hidden rounded border border-slate-300 bg-white leading-tight text-black"
+      className="label-cell flex items-center overflow-hidden rounded border border-slate-300 bg-white leading-tight text-black"
       style={{
         width: `${layout.widthMm}mm`,
         height: `${layout.heightMm}mm`,
         padding: `${layout.paddingMm}mm`,
-        // QR 상자 안에 정적여백이 들어 있어서, 상자를 그대로 가운데 맞추면 잉크가
-        // 그만큼 오른쪽으로 치우쳐 보입니다. 오른쪽에 같은 폭을 더해 균형을 잡으면
-        // 눈에 보이는 좌우 여백이 같아집니다.
-        paddingRight: `${layout.paddingMm + qrQuietZoneMm(qrSizeMm)}mm`,
+        // 가로는 왼쪽 정렬이라 이 값이 QR 이 시작하는 자리를 정합니다.
+        paddingLeft: `${layout.paddingLeftMm}mm`,
         gap: `${qrGapMm(qrSizeMm)}mm`,
       }}
     >
