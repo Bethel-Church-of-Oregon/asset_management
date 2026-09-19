@@ -96,6 +96,11 @@ PC 창을 좁히면 모바일로 잡힌다. 판정은 `tailwind.config.ts` 의 �
 두 개로만 한다 — `touch` (`(hover: none), (pointer: coarse)`) 와 `mouse`
 (`(hover: hover) and (pointer: fine)`). 둘은 서로의 정확한 여집합이다.
 
+이 `raw` 스크린이 있으면 Tailwind 가 `min-[1036px]:` 같은 **임의 min-width 변형을
+오류도 경고도 없이 생성하지 않는다** (3.4.19 확인). 새 브레이크포인트가 필요하면
+임의 변형 대신 기본 스크린(`sm`·`lg`…)을 쓰거나 `tailwind.config.ts` 에 이름을
+붙여 추가한다. CSS 에서 조용히 빠지므로 클래스를 아무리 들여다봐도 원인이 안 보인다.
+
 기기에 따라 다른 것은 **스캔 하나뿐**이다 (`NavItem.only` → `src/components/Nav.tsx`).
 나머지 메뉴는 PC·모바일 양쪽에 그대로 둔다 — 모바일에서 스캔만 남겼더니 로그인
 직후 도착하는 대시보드가 메뉴에 없는 화면이 되어 되돌렸다.
