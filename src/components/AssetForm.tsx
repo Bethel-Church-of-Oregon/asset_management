@@ -9,7 +9,7 @@ import type { Lookups } from '@/lib/queries';
 import { SEQ_DIGITS, SEQ_MAX, assetNoBarcodeValue, toSeq } from '@/lib/asset-no';
 import { STATUS_OPTIONS } from '@/lib/constants';
 import { today } from '@/lib/format';
-import Barcode from './Barcode';
+import QrCode from './QrCode';
 import FormSection, { Field } from './FormSection';
 import { FormBanner } from './FormMessage';
 import MoneyInput from './MoneyInput';
@@ -190,7 +190,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
                       ? suggesting
                         ? '다음 번호 조회 중...'
                         : '자동 제안됩니다. 필요하면 직접 수정하세요.'
-                      : '번호를 바꾸면 바코드를 다시 출력해야 합니다.')
+                      : '번호를 바꾸면 라벨을 다시 출력해야 합니다.')
                   }
                 >
                   <input
@@ -223,17 +223,12 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
                   {assetNoPreview ?? '—'}
                 </div>
                 {assetNoPreview ? (
-                  <Barcode
-                    value={assetNoBarcodeValue(assetNoPreview)}
-                    moduleWidth={1.6}
-                    height={44}
-                    fontSize={0}
-                    showText={false}
-                    cssWidth="100%"
-                  />
+                  <div className="mx-auto w-32">
+                    <QrCode value={assetNoBarcodeValue(assetNoPreview)} text={assetNoPreview} />
+                  </div>
                 ) : (
                   <p className="py-3 text-xs text-slate-400">
-                    항목을 모두 선택하면 바코드가 표시됩니다.
+                    항목을 모두 선택하면 QR 코드가 표시됩니다.
                   </p>
                 )}
               </div>
@@ -474,7 +469,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
         <div className="flex flex-wrap items-center gap-2">
           {/* 등록 후 곧바로 라벨 출력 화면으로 갑니다 — 버튼 이름이 곧 동작입니다. */}
           <SubmitButton pendingLabel={mode === 'create' ? '등록 중...' : '저장 중...'}>
-            {mode === 'create' ? '등록 후 바코드 출력' : '변경사항 저장'}
+            {mode === 'create' ? '등록 후 라벨 출력' : '변경사항 저장'}
           </SubmitButton>
 
           {/* 같은 건물·부서·팀·장소를 유지한 빈 폼으로 돌아가 다음 번호를 채웁니다. */}
@@ -496,7 +491,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
 
         {mode === 'create' ? (
           <p className="mt-2 text-xs text-slate-500">
-            &lsquo;저장 후 다음 자산 등록&rsquo; 은 추후에 바코드 일괄 출력이 가능합니다.
+            &lsquo;저장 후 다음 자산 등록&rsquo; 은 추후에 라벨 일괄 출력이 가능합니다.
           </p>
         ) : null}
       </div>

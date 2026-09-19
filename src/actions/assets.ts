@@ -249,7 +249,7 @@ export async function createAssetAction(_prev: FormState, formData: FormData): P
     redirect(`/assets/new?${params.toString()}`);
   }
 
-  // 버튼 이름이 '등록 후 바코드 출력' 이므로 곧바로 라벨 출력 화면으로 보냅니다.
+  // 버튼 이름이 '등록 후 라벨 출력' 이므로 곧바로 라벨 출력 화면으로 보냅니다.
   // 라벨은 등록 직후에 붙여야 물건과 번호가 어긋나지 않습니다.
   redirect(`/labels?ids=${createdId}&created=1`);
 }

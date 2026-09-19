@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     // 탭 제목이 지나치게 길어지지 않도록 하위 페이지는 기관명만 덧붙입니다.
     template: `%s · ${ORG_NAME}`,
   },
-  description: '교회 비품·자산 등록, 바코드 라벨 출력, 스캔 조회 및 수리 이력 관리',
+  description: '교회 비품·자산 등록, QR 라벨 출력, 스캔 조회 및 수리 이력 관리',
   robots: { index: false, follow: false },
 };
 

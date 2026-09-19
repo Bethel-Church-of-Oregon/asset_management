@@ -103,8 +103,14 @@ PC 창을 좁히면 모바일로 잡힌다. 판정은 `tailwind.config.ts` 의 �
 - 스캔 · 조회: `only: 'touch'` → `mouse:hidden` (PC 에서만 숨김)
 - 하단 스캔 버튼: `src/components/ScanFab.tsx` — 기본 `hidden` + `touch:flex`
 
-**감추는 것은 메뉴뿐이고 `/scan` 주소는 PC 에서도 그대로 열린다.** USB 바코드
-스캐너는 키보드처럼 입력하는 장치라 오히려 PC 워크플로다 — 막지 않는다.
+**감추는 것은 메뉴뿐이고 `/scan` 주소는 PC 에서도 그대로 열린다.** USB 스캐너는
+키보드처럼 입력하는 장치라 오히려 PC 워크플로다 — 막지 않는다. 다만 라벨은 QR 이라
+2D 이미저가 필요하다(1D 레이저 스캐너는 못 읽는다).
+
+카메라 스캔은 **해상도를 반드시 요청한다** (`ScanBox` 의 `width/height: { ideal: 1920 }`).
+지정하지 않으면 브라우저가 640×480 을 주는데, 작은 라벨에서는 모듈당 픽셀이
+모자라 디코딩이 실패한다 — 휴대폰은 5~6cm 보다 가까우면 초점을 못 잡으므로
+"더 가까이" 로는 해결되지 않는다.
 
 고정 버튼은 `sticky bottom-0` 푸터가 있는 화면(`/assets/new`, `/assets/:id/edit`)에서는
 `ScanFab` 의 `HIDDEN_ON` 으로 숨긴다. 겹치면 저장 버튼을 가린다.
@@ -120,11 +126,11 @@ PC 창을 좁히면 모바일로 잡힌다. 판정은 `tailwind.config.ts` 의 �
 `assetNo.replace('-', '')` 는 하나만 지운다 — 숫자만 뽑을 때는 반드시
 `assetNoBarcodeValue` 나 `assetNoFragment` 를 쓴다.
 
-**바코드에는 하이픈을 뺀 숫자 10자리만 넣는다** (`assetNoBarcodeValue`). 숫자만이면
-Code 128 이 Code Set C 로 두 자리를 한 심볼에 담아 62mm 라벨에서 모듈 폭이
-0.32mm → 0.52mm 로 굵어진다. 하이픈을 그대로 인코딩하면 B 세트로 떨어져 예전
-7자리(0.399mm)보다 얇아지고 스캔이 잘 안 된다. 사람이 읽는 줄은 `Barcode` 의
-`text` prop 으로 따로 넘긴다.
+**QR 에는 하이픈을 뺀 숫자 10자리만 넣는다** (`assetNoBarcodeValue`). 숫자만이면
+QR 이 숫자 모드로 인코딩해 가장 작은 **버전 1(21 × 21)에 오류정정 H** 를 걸고도
+담긴다(숫자 17자리까지). 버전이 커지면 같은 라벨에서 모듈이 얇아져 스캔이
+어려워지므로, 자산번호 전 범위가 버전 1 에 들어가는지 단위테스트가 지킨다.
+사람이 읽는 줄은 `QrCode` 의 `text` prop 으로 따로 넘긴다.
 
 예전 형식(`YY-BDSSS`)에서 올리는 것은 `npm run db:widen-asset-no` 다. `drizzle-kit
 push` 는 칸 폭만 넓히고 값에 0 을 채우거나 `asset_no` 를 다시 만들지 못한다.
@@ -151,10 +157,18 @@ CSV 파일명·기본 날짜가 내일로 찍혔다.
 
 ## 라벨 치수
 
-`measureContentFit()` (`src/lib/labels.ts`) 은 `LabelCell` (`src/components/LabelPrinter.tsx`)
-의 쌓임 순서·마진·줄 높이(`leading-tight` = 1.25)를 손으로 재현한 계산이다.
-**한쪽을 바꾸면 반드시 다른 쪽도 함께 맞춘다.** 어긋나면 넘침 경고가 거짓이 되고,
-라벨은 `overflow: hidden` 이라 조용히 잘린다.
+라벨은 **왼쪽 QR · 오른쪽 글자** 두 칸이다. `measureContentFit()` (`src/lib/labels.ts`)
+은 `LabelCell` (`src/components/LabelPrinter.tsx`) 의 쌓임 순서·간격·줄
+높이(`leading-tight` = 1.25)를 손으로 재현한 계산이다. 공유 상수는 `LINE_GAP_MM` ·
+`qrGapMm()` 이다. **한쪽을 바꾸면 반드시 다른 쪽도 함께 맞춘다.** 어긋나면 넘침
+경고가 거짓이 되고, 라벨은 `overflow: hidden` 이라 조용히 잘린다.
+
+`qrGapMm()` 은 장식이 아니라 **QR 정적여백**이다 — 모듈 크기에 비례해 4모듈을
+확보한다. 고정값으로 두면 큰 QR 에서 여백이 모자란다 (단위테스트가 잡는다).
+
+프린터에는 **하드 여백**이 있다(브라더 QL DK-11209 기준 용지 62 × 29mm,
+인쇄영역 58.9 × 22.9mm). 라벨 가장자리까지 찍히지 않는다는 뜻이고, QR 상하
+정적여백은 인쇄되지 않는 흰 바탕이 메운다.
 
 ## 기관 이름 · 로고
 

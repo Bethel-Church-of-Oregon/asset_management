@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { assetNoBarcodeValue } from '@/lib/asset-no';
-import Barcode from './Barcode';
+import QrCode from './QrCode';
 import { IconBack, IconPrinter } from './icons';
 import {
-  BARCODE_QUIET_ZONE_MODULES,
   DEFAULT_CONTENT,
   DEFAULT_PRESET_ID,
   FONT_BASE_PT,
   LABEL_PRESETS,
+  LINE_GAP_MM,
   type LabelContent,
   type LabelLayout,
   buildPrintCss,
@@ -18,6 +18,7 @@ import {
   measureContentFit,
   presetContentDefaults,
   presetToLayout,
+  qrGapMm,
   sheetCapacity,
 } from '@/lib/labels';
 import { formatDate } from '@/lib/format';
@@ -33,13 +34,20 @@ export type LabelAsset = {
   deptName: string | null;
 };
 
-const STORAGE_KEY = 'cam.labelSettings.v1';
+// v2: 바코드(1D) → QR 로 바뀌며 `barcodeHeightMm` 이 `qrSizeMm` 으로 교체됐습니다.
+// 예전 설정을 그대로 얹으면 QR 크기가 기본값에 머물러 혼란스러우므로 키를 올립니다.
+const STORAGE_KEY = 'cam.labelSettings.v2';
 
 type Settings = {
   presetId: string;
   layout: LabelLayout;
   content: LabelContent;
   skipCells: number;
+  /**
+   * 용지를 세로로 두고 내용만 90도 돌려 찍습니다.
+   * 프린터 용지 목록에 가로 규격(62 × 29)이 없고 세로(29 × 62)만 있을 때 씁니다.
+   */
+  rotate: boolean;
 };
 
 function defaultSettings(): Settings {
@@ -49,6 +57,7 @@ function defaultSettings(): Settings {
     layout: presetToLayout(preset),
     content: { ...DEFAULT_CONTENT, ...presetContentDefaults(preset) },
     skipCells: 0,
+    rotate: false,
   };
 }
 
@@ -67,6 +76,7 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
           layout: { ...current.layout, ...parsed.layout },
           content: { ...current.content, ...parsed.content },
           skipCells: parsed.skipCells ?? 0,
+          rotate: parsed.rotate ?? false,
         }));
       }
     } catch {
@@ -104,11 +114,11 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
     return list;
   }, [assets, content.copies, layout, settings.skipCells]);
 
-  const printCss = useMemo(() => buildPrintCss(layout), [layout]);
+  const printCss = useMemo(() => buildPrintCss(layout, settings.rotate), [layout, settings.rotate]);
 
   function applyPreset(presetId: string) {
     const preset = findPreset(presetId);
-    // 치수를 바꾸면 바코드 높이·글자 크기도 그 규격의 권장값으로 맞춥니다.
+    // 치수를 바꾸면 QR 크기·글자 크기도 그 규격의 권장값으로 맞춥니다.
     // 표시 항목 토글(자산명·장소 등)은 사용자가 정한 대로 둡니다.
     setSettings((s) => ({
       ...s,
@@ -186,6 +196,27 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
               <p className="field-hint">
                 {activePreset?.note ?? '아래 값을 직접 조정한 상태입니다.'}
               </p>
+
+              {layout.kind === 'roll' ? (
+                <div className="mt-3">
+                  <Check
+                    label="90° 회전 출력"
+                    checked={settings.rotate}
+                    onChange={(v) => setSettings((s) => ({ ...s, rotate: v }))}
+                  />
+                  <p className="field-hint">
+                    인쇄 창 용지 목록에{' '}
+                    <span className="mono">
+                      {layout.widthMm} × {layout.heightMm}
+                    </span>{' '}
+                    가 없고{' '}
+                    <span className="mono">
+                      {layout.heightMm} × {layout.widthMm}
+                    </span>{' '}
+                    만 있을 때 켜세요. 아이폰·아이패드(AirPrint)가 여기에 해당합니다.
+                  </p>
+                </div>
+              ) : null}
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:col-span-2 lg:grid-cols-5">
@@ -214,12 +245,12 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
                 onChange={(v) => setLayout('paddingMm', v)}
               />
               <NumField
-                label="바코드 높이 (mm)"
-                value={content.barcodeHeightMm}
+                label="QR 크기 (mm)"
+                value={content.qrSizeMm}
                 step={0.5}
-                min={4}
+                min={6}
                 max={40}
-                onChange={(v) => setContent('barcodeHeightMm', v)}
+                onChange={(v) => setContent('qrSizeMm', v)}
               />
               <NumField
                 label="글자 크기 배율"
@@ -354,7 +385,7 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
             <strong className="font-semibold">선택한 항목이 라벨 세로 폭을 넘습니다</strong> — 필요{' '}
             <span className="mono font-semibold">{fit.neededMm.toFixed(1)}mm</span> / 인쇄 영역{' '}
             <span className="mono font-semibold">{fit.availableMm.toFixed(1)}mm</span>. 이대로
-            출력하면 아래쪽이 잘립니다. 표시 항목을 줄이거나, <strong>바코드 높이</strong> 또는{' '}
+            출력하면 잘립니다. 표시 항목을 줄이거나, <strong>QR 크기</strong> 또는{' '}
             <strong>글자 크기 배율</strong>을 낮추세요.
           </div>
         ) : null}
@@ -363,9 +394,10 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
           <strong className="font-semibold">인쇄 팁</strong> — 브라우저 인쇄 창에서
           <strong> 배율(Scale)은 100%</strong>, <strong>여백(Margins)은 없음</strong>,
           <strong> 머리글·바닥글은 해제</strong>로 두세요. 라벨 프린터는 프린터 설정에서 용지 종류를
-          실제 라벨 규격(예: DK-11209)으로 먼저 지정해야 크기가 맞습니다. 라벨이 잘리거나 돌아서
-          나오면 드라이버의 <strong>용지 방향(가로/세로)</strong>을 위 가로·세로 값과 맞추세요. 첫
-          출력은 1~2장만 시험 인쇄해 스캐너로 읽히는지 확인하시길 권합니다.
+          실제 라벨 규격(예: DK-11209)으로 먼저 지정해야 크기가 맞습니다. 용지 목록에 가로 규격이
+          없고 세로만 있으면(아이폰·아이패드는 항상 그렇습니다) 위의 <strong>90° 회전 출력</strong>
+          을 켜세요 — 인쇄 창의 용지·방향 설정으로는 바꿀 수 없습니다. 첫 출력은 1~2장만 시험 인쇄해
+          스캐너로 읽히는지 확인하시길 권합니다.
         </div>
 
         <h2 className="text-sm font-bold text-slate-900">미리보기</h2>
@@ -385,21 +417,22 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
             : undefined
         }
       >
+        {/* `.label-slot` 은 화면에서는 `display: contents` 라 아무 상자도 만들지
+            않습니다. 회전 출력일 때만 용지 크기의 칸이 되어 그 안에서 라벨을
+            돌립니다 (`buildPrintCss` 참고). */}
         {cells.map((asset, index) =>
           asset ? (
-            <LabelCell
-              key={`${asset.id}-${index}`}
-              asset={asset}
-              layout={layout}
-              content={content}
-            />
+            <div className="label-slot" key={`${asset.id}-${index}`}>
+              <LabelCell asset={asset} layout={layout} content={content} />
+            </div>
           ) : (
-            <div
-              key={`blank-${index}`}
-              className="label-cell rounded border border-dashed border-slate-300 bg-slate-50"
-              style={{ width: `${layout.widthMm}mm`, height: `${layout.heightMm}mm` }}
-              aria-hidden="true"
-            />
+            <div className="label-slot" key={`blank-${index}`}>
+              <div
+                className="label-cell rounded border border-dashed border-slate-300 bg-slate-50"
+                style={{ width: `${layout.widthMm}mm`, height: `${layout.heightMm}mm` }}
+                aria-hidden="true"
+              />
+            </div>
           ),
         )}
       </div>
@@ -425,74 +458,67 @@ function LabelCell({
     metaParts.push(formatDate(asset.acquiredDate));
   }
 
-  // 바코드는 라벨 안쪽 폭을 가득 채우고(모듈 폭이 넓어져 인식이 쉬워집니다),
-  // 막대 높이만 mm 로 고정합니다.
-  const barcodeHeightMm = Math.min(content.barcodeHeightMm, layout.heightMm - layout.paddingMm * 2);
+  // QR 은 정사각이라 라벨 안쪽 높이를 넘지 않는 선에서 설정값을 씁니다.
+  const qrSizeMm = Math.min(content.qrSizeMm, layout.heightMm - layout.paddingMm * 2);
 
   // 라벨은 물리 매체라 글자 크기를 pt 로 못박고, 규격별 배율로 함께 키웁니다.
   const pt = (base: number) => `${(base * content.fontScale).toFixed(2)}pt`;
 
+  // 왼쪽 QR · 오른쪽 글자. 줄 간격과 칸 사이 간격은 `measureContentFit` 과
+  // 같은 상수를 써야 넘침 경고가 거짓말을 하지 않습니다.
   return (
     <div
-      className="label-cell flex flex-col items-center justify-center overflow-hidden rounded border border-slate-300 bg-white text-center leading-tight text-black"
+      className="label-cell flex items-center overflow-hidden rounded border border-slate-300 bg-white leading-tight text-black"
       style={{
         width: `${layout.widthMm}mm`,
         height: `${layout.heightMm}mm`,
         padding: `${layout.paddingMm}mm`,
+        gap: `${qrGapMm(qrSizeMm)}mm`,
       }}
     >
-      {content.showChurchName && content.churchName ? (
-        <div
-          style={{ fontSize: pt(FONT_BASE_PT.churchName), letterSpacing: '0.02em' }}
-          className="w-full truncate"
-        >
-          {content.churchName}
-        </div>
-      ) : null}
-
-      <div className="w-full" style={{ height: `${barcodeHeightMm}mm` }}>
-        <Barcode
+      <div className="shrink-0" style={{ width: `${qrSizeMm}mm`, height: `${qrSizeMm}mm` }}>
+        <QrCode
           value={assetNoBarcodeValue(asset.assetNo)}
           text={asset.assetNo}
-          moduleWidth={1}
-          height={30}
-          quietZone={BARCODE_QUIET_ZONE_MODULES}
-          showText={false}
-          stretch
-          cssWidth="100%"
-          cssHeight="100%"
           className="block h-full w-full"
         />
       </div>
 
       <div
-        className="mono w-full font-bold"
-        style={{
-          fontSize: pt(FONT_BASE_PT.assetNo),
-          letterSpacing: '0.06em',
-          marginTop: '0.4mm',
-        }}
+        className="flex min-w-0 flex-1 flex-col justify-center"
+        style={{ gap: `${LINE_GAP_MM}mm` }}
       >
-        {asset.assetNo}
+        {content.showChurchName && content.churchName ? (
+          <div
+            style={{ fontSize: pt(FONT_BASE_PT.churchName), letterSpacing: '0.02em' }}
+            className="w-full truncate"
+          >
+            {content.churchName}
+          </div>
+        ) : null}
+
+        <div
+          className="mono w-full truncate font-bold"
+          style={{ fontSize: pt(FONT_BASE_PT.assetNo), letterSpacing: '0.04em' }}
+        >
+          {asset.assetNo}
+        </div>
+
+        {content.showName ? (
+          <div className="w-full truncate" style={{ fontSize: pt(FONT_BASE_PT.name) }}>
+            {asset.name}
+          </div>
+        ) : null}
+
+        {metaParts.length > 0 ? (
+          <div
+            className="w-full truncate text-neutral-600"
+            style={{ fontSize: pt(FONT_BASE_PT.meta) }}
+          >
+            {metaParts.join(' · ')}
+          </div>
+        ) : null}
       </div>
-
-      {content.showName ? (
-        <div
-          className="w-full truncate"
-          style={{ fontSize: pt(FONT_BASE_PT.name), marginTop: '0.3mm' }}
-        >
-          {asset.name}
-        </div>
-      ) : null}
-
-      {metaParts.length > 0 ? (
-        <div
-          className="w-full truncate text-neutral-600"
-          style={{ fontSize: pt(FONT_BASE_PT.meta) }}
-        >
-          {metaParts.join(' · ')}
-        </div>
-      ) : null}
     </div>
   );
 }

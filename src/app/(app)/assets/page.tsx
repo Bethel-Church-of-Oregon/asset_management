@@ -85,7 +85,7 @@ export default async function AssetsPage({
           <p className="mt-1 text-sm text-slate-500">
             {hasFilters
               ? '검색어나 필터를 바꿔 다시 시도해 보세요.'
-              : '첫 자산을 등록하면 자산번호와 바코드가 자동으로 만들어집니다.'}
+              : '첫 자산을 등록하면 자산번호와 QR 이 자동으로 만들어집니다.'}
           </p>
           {hasFilters ? (
             <Link href="/assets" className="btn-secondary mt-5">

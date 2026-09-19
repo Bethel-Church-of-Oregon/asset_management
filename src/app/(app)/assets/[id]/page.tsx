@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import Barcode from '@/components/Barcode';
+import QrCode from '@/components/QrCode';
 import ConfirmSubmit from '@/components/ConfirmSubmit';
 import CopyButton from '@/components/CopyButton';
 import DisposeForm from '@/components/DisposeForm';
@@ -269,15 +269,14 @@ export default async function AssetDetailPage({
         <aside className="space-y-4">
           <div className="card p-4 text-center">
             <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-              바코드
+              QR 코드
             </h2>
-            <Barcode
-              value={assetNoBarcodeValue(asset.assetNo)}
-              text={asset.assetNo}
-              moduleWidth={2}
-              height={64}
-              fontSize={13}
-            />
+            <div className="mx-auto w-40">
+              <QrCode value={assetNoBarcodeValue(asset.assetNo)} text={asset.assetNo} />
+            </div>
+            <p className="mono mt-2 text-sm font-bold tracking-wider text-slate-800">
+              {asset.assetNo}
+            </p>
             <Link
               href={`/labels?ids=${asset.id}`}
               className="btn-secondary mt-3 w-full !py-1.5 text-xs"

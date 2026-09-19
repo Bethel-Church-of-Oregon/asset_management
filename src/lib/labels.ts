@@ -1,4 +1,5 @@
 import { ORG_NAME } from './app-info';
+import { QR_QUIET_ZONE_MODULES } from './qr';
 
 /**
  * 라벨 규격.
@@ -31,8 +32,8 @@ export type LabelPreset = LabelLayout & {
   id: string;
   name: string;
   note?: string;
-  /** 이 규격에서 권장하는 바코드 막대 높이 (mm) */
-  barcodeHeightMm: number;
+  /** 이 규격에서 권장하는 QR 한 변의 길이 (mm) */
+  qrSizeMm: number;
   /** 이 규격에서 권장하는 글자 크기 배율 (1.0 = 기준) */
   fontScale: number;
 };
@@ -46,7 +47,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 62,
     heightMm: 29,
     paddingMm: 2.5,
-    barcodeHeightMm: 12,
+    qrSizeMm: 21,
     fontScale: 1.15,
     cols: 1,
     rows: 1,
@@ -63,7 +64,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 90,
     heightMm: 29,
     paddingMm: 2.5,
-    barcodeHeightMm: 11,
+    qrSizeMm: 21,
     fontScale: 1.25,
     cols: 1,
     rows: 1,
@@ -75,12 +76,12 @@ export const LABEL_PRESETS: LabelPreset[] = [
   {
     id: 'roll-54x17',
     name: 'Brother DK-11204 (54 × 17 mm)',
-    note: '소형 비품용. 세로 17mm 라 바코드·번호·자산명까지만 들어갑니다 (장소·팀명은 넘칩니다).',
+    note: '소형 비품용. QR 12mm 에 번호·자산명이 들어갑니다 (장소·팀명까지 켜면 빠듯합니다).',
     kind: 'roll',
     widthMm: 54,
     heightMm: 17,
-    paddingMm: 1.5,
-    barcodeHeightMm: 7,
+    paddingMm: 2,
+    qrSizeMm: 12,
     fontScale: 0.85,
     cols: 1,
     rows: 1,
@@ -97,7 +98,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 50,
     heightMm: 25,
     paddingMm: 2,
-    barcodeHeightMm: 9,
+    qrSizeMm: 18,
     fontScale: 1,
     cols: 1,
     rows: 1,
@@ -114,7 +115,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 54,
     heightMm: 25,
     paddingMm: 2,
-    barcodeHeightMm: 9,
+    qrSizeMm: 18,
     fontScale: 1,
     cols: 1,
     rows: 1,
@@ -131,7 +132,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 70,
     heightMm: 38,
     paddingMm: 3,
-    barcodeHeightMm: 14,
+    qrSizeMm: 27,
     fontScale: 1.3,
     cols: 1,
     rows: 1,
@@ -143,12 +144,12 @@ export const LABEL_PRESETS: LabelPreset[] = [
   {
     id: 'roll-40x20',
     name: '라벨 프린터 40 × 20 mm',
-    note: '가장 작은 비품용. 바코드와 번호만 들어갑니다.',
+    note: '가장 작은 비품용. QR 과 번호만 들어갑니다.',
     kind: 'roll',
     widthMm: 40,
     heightMm: 20,
     paddingMm: 1.5,
-    barcodeHeightMm: 8,
+    qrSizeMm: 14,
     fontScale: 0.85,
     cols: 1,
     rows: 1,
@@ -164,8 +165,8 @@ export const LABEL_PRESETS: LabelPreset[] = [
     kind: 'sheet',
     widthMm: 64.6,
     heightMm: 33.8,
-    paddingMm: 2,
-    barcodeHeightMm: 12,
+    paddingMm: 2.5,
+    qrSizeMm: 24,
     fontScale: 1.1,
     cols: 3,
     rows: 8,
@@ -181,8 +182,8 @@ export const LABEL_PRESETS: LabelPreset[] = [
     kind: 'sheet',
     widthMm: 63.5,
     heightMm: 38.1,
-    paddingMm: 2,
-    barcodeHeightMm: 14,
+    paddingMm: 3,
+    qrSizeMm: 27,
     fontScale: 1.15,
     cols: 3,
     rows: 7,
@@ -199,7 +200,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
     widthMm: 99.1,
     heightMm: 42.3,
     paddingMm: 3,
-    barcodeHeightMm: 16,
+    qrSizeMm: 30,
     fontScale: 1.4,
     cols: 2,
     rows: 6,
@@ -216,12 +217,11 @@ export function findPreset(id: string): LabelPreset {
   return LABEL_PRESETS.find((p) => p.id === id) ?? LABEL_PRESETS[0];
 }
 
-/** 프리셋이 권장하는 바코드 높이·글자 배율. 표시 항목 토글은 사용자 설정을 유지합니다. */
-export function presetContentDefaults(preset: LabelPreset): Pick<
-  LabelContent,
-  'barcodeHeightMm' | 'fontScale'
-> {
-  return { barcodeHeightMm: preset.barcodeHeightMm, fontScale: preset.fontScale };
+/** 프리셋이 권장하는 QR 크기·글자 배율. 표시 항목 토글은 사용자 설정을 유지합니다. */
+export function presetContentDefaults(
+  preset: LabelPreset,
+): Pick<LabelContent, 'qrSizeMm' | 'fontScale'> {
+  return { qrSizeMm: preset.qrSizeMm, fontScale: preset.fontScale };
 }
 
 /** 프리셋에서 표시용 메타와 권장값을 떼고 치수만 남깁니다. */
@@ -247,8 +247,8 @@ export type LabelContent = {
   showAcquiredDate: boolean;
   showChurchName: boolean;
   churchName: string;
-  /** 바코드 막대 높이 (mm) */
-  barcodeHeightMm: number;
+  /** QR 한 변의 길이 (mm) */
+  qrSizeMm: number;
   /** 글자 크기 배율 (1.0 = 기준) */
   fontScale: number;
   /** 한 자산당 출력할 라벨 장수 */
@@ -268,8 +268,29 @@ export const FONT_BASE_PT = {
   meta: 5.5,
 } as const;
 
-/** Code 128 규격이 요구하는 최소 여백 — 좌우 각 10 모듈. */
-export const BARCODE_QUIET_ZONE_MODULES = 10;
+/**
+ * QR 한 변의 모듈 수 (버전 1). 자산번호는 언제나 여기에 들어갑니다 — `qr.ts` 참고.
+ */
+const QR_MODULES = 21;
+
+/**
+ * QR 과 오른쪽 글자 칸 사이의 간격 (mm).
+ *
+ * 보기 좋으라고 두는 값이 아니라 **QR 의 정적여백**입니다. 글자가 이 안으로
+ * 들어오면 디코더가 심볼 경계를 못 찾습니다. 그래서 고정값이 아니라 모듈 크기에
+ * 비례합니다 — QR 이 커지면 모듈도 커지고, 필요한 여백도 같이 커집니다.
+ *
+ * 라벨 가장자리 쪽은 인쇄되지 않는 흰 바탕이 이어져서 `paddingMm` 만으로도
+ * 충분하지만, 글자 쪽은 실제로 잉크가 찍히므로 규격대로 4모듈을 확보합니다.
+ *
+ * **`LabelCell` 과 같아야 합니다.**
+ */
+export function qrGapMm(qrSizeMm: number): number {
+  return (QR_QUIET_ZONE_MODULES * qrSizeMm) / QR_MODULES;
+}
+
+/** 오른쪽 글자 칸의 줄 사이 간격 (mm). **`LabelCell` 과 같아야 합니다.** */
+export const LINE_GAP_MM = 0.3;
 
 export const DEFAULT_CONTENT: LabelContent = {
   showName: true,
@@ -279,7 +300,7 @@ export const DEFAULT_CONTENT: LabelContent = {
   showChurchName: false,
   // 표시 토글은 꺼둔 채 이름만 미리 채워, 켤 때 다시 타이핑하지 않게 합니다.
   churchName: ORG_NAME,
-  barcodeHeightMm: 12,
+  qrSizeMm: 21,
   fontScale: 1.15,
   copies: 1,
 };
@@ -289,29 +310,61 @@ export const DEFAULT_CONTENT: LabelContent = {
  *
  * Roll printers get one label per page at exactly the label's size; sheets get
  * an A4 page with the label grid positioned by the paper's margins.
+ *
+ * `rotate` 는 용지를 세로로 두고 **내용만 90도 돌려** 찍습니다. 라벨 프린터
+ * 드라이버는 다이컷 라벨을 테이프 폭이 앞에 오는 세로 규격으로만 내놓는 일이
+ * 많고(AirPrint 는 늘 그렇습니다 — 62 × 29 는 없고 29 × 62 만 있습니다),
+ * `@page` 의 크기가 인쇄 창의 용지 선택을 덮어쓰기 때문에 앱이 맞춰 주지 않으면
+ * 사용자가 손쓸 방법이 없습니다. 아이폰·아이패드는 드라이버를 깔 수도 없습니다.
+ * 회전은 강체 변환이라 QR 모듈 폭(mm)은 그대로 보존됩니다. QR 자체는 방향을
+ * 가리지 않지만 사람이 읽는 글자는 가로로 서야 하므로 회전은 여전히 필요합니다.
  */
-export function buildPrintCss(layout: LabelLayout): string {
+export function buildPrintCss(layout: LabelLayout, rotate = false): string {
   if (layout.kind === 'roll') {
+    // 회전할 때만 칸마다 용지 크기의 칸막이(`.label-slot`)가 생깁니다. 그 밖에는
+    // `display: contents` 라 화면 미리보기도, 회전 없는 인쇄도 예전 그대로입니다.
+    const pageWidthMm = rotate ? layout.heightMm : layout.widthMm;
+    const pageHeightMm = rotate ? layout.widthMm : layout.heightMm;
+    const pagination = rotate
+      ? `  .label-slot {
+    display: block;
+    position: relative;
+    width: ${pageWidthMm}mm;
+    height: ${pageHeightMm}mm;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+  .label-slot:last-child { break-after: auto; page-break-after: auto; }
+  .label-cell {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }`
+      : `  .label-cell { break-after: page; page-break-after: always; }
+  .label-slot:last-child .label-cell { break-after: auto; page-break-after: auto; }`;
+
     return `
-@page { size: ${layout.widthMm}mm ${layout.heightMm}mm; margin: 0; }
+@page { size: ${pageWidthMm}mm ${pageHeightMm}mm; margin: 0; }
 .label-root { --label-w: ${layout.widthMm}mm; --label-h: ${layout.heightMm}mm; --label-p: ${layout.paddingMm}mm; }
+.label-slot { display: contents; }
 @media print {
   .label-root { display: block; }
   .label-cell {
     width: ${layout.widthMm}mm;
     height: ${layout.heightMm}mm;
-    break-after: page;
-    page-break-after: always;
     border: 0 !important;
     border-radius: 0 !important;
   }
-  .label-cell:last-child { break-after: auto; page-break-after: auto; }
+${pagination}
 }`;
   }
 
   return `
 @page { size: A4 portrait; margin: ${layout.pageMarginTopMm}mm ${layout.pageMarginLeftMm}mm; }
 .label-root { --label-w: ${layout.widthMm}mm; --label-h: ${layout.heightMm}mm; --label-p: ${layout.paddingMm}mm; }
+.label-slot { display: contents; }
 @media print {
   .label-root {
     display: grid;
@@ -356,11 +409,15 @@ export type ContentFit = {
 };
 
 /**
- * 선택한 표시 항목이 라벨 세로 폭에 들어가는지 계산합니다.
+ * 선택한 표시 항목이 라벨 안에 들어가는지 계산합니다.
+ *
+ * 라벨은 **왼쪽 QR · 오른쪽 글자** 두 칸으로 나뉩니다. 그래서 세로로 필요한
+ * 높이는 둘 중 더 큰 쪽이고, 글자는 QR 옆에 쌓입니다.
  *
  * `LabelCell` 은 `overflow: hidden` 이라 넘치면 조용히 잘립니다. 인쇄물은 되돌릴
  * 수 없으니, 같은 쌓임 순서를 그대로 계산해 미리 경고할 수 있게 합니다.
- * 값을 바꿀 때는 `LabelCell` 의 마진·줄 높이와 반드시 함께 맞추세요.
+ * 값을 바꿀 때는 `LabelCell` 의 간격·줄 높이와 반드시 함께 맞추세요
+ * (`QR_GAP_MM` · `LINE_GAP_MM` · `LINE_HEIGHT`).
  */
 export function measureContentFit(
   layout: LabelLayout,
@@ -370,13 +427,20 @@ export function measureContentFit(
   const { heightMm: availableMm } = printableArea(layout);
   const line = (basePt: number) => basePt * content.fontScale * LINE_HEIGHT * PT_TO_MM;
 
-  let neededMm = Math.min(content.barcodeHeightMm, availableMm);
+  // 오른쪽 글자 칸에 쌓이는 줄들 — `LabelCell` 의 순서와 같아야 합니다.
+  const lines: number[] = [];
   if (content.showChurchName && content.churchName.trim() !== '') {
-    neededMm += line(FONT_BASE_PT.churchName);
+    lines.push(line(FONT_BASE_PT.churchName));
   }
-  neededMm += 0.4 + line(FONT_BASE_PT.assetNo); // 바코드와의 간격 + 자산번호
-  if (content.showName) neededMm += 0.3 + line(FONT_BASE_PT.name);
-  if (hasMetaLine) neededMm += line(FONT_BASE_PT.meta);
+  lines.push(line(FONT_BASE_PT.assetNo));
+  if (content.showName) lines.push(line(FONT_BASE_PT.name));
+  if (hasMetaLine) lines.push(line(FONT_BASE_PT.meta));
+
+  const textMm = lines.reduce((sum, h) => sum + h, 0) + Math.max(0, lines.length - 1) * LINE_GAP_MM;
+
+  // QR 은 정사각이라 세로로 자기 크기만큼 차지합니다. 둘 중 큰 쪽이 라벨 높이를
+  // 정하고, 넘치면 QR 이 아니라 글자가 잘립니다(QR 은 높이를 고정해 두었습니다).
+  const neededMm = Math.max(content.qrSizeMm, textMm);
 
   const slackMm = availableMm - neededMm;
   // 0.05mm 는 브라우저의 mm→px 반올림 여유입니다.

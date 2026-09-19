@@ -4,7 +4,7 @@ import LabelPrinter from '@/components/LabelPrinter';
 import { requireSession } from '@/lib/auth';
 import { getAssetsByIds, listAssetIds } from '@/lib/queries';
 
-export const metadata: Metadata = { title: '바코드 라벨 출력' };
+export const metadata: Metadata = { title: 'QR 라벨 출력' };
 
 /** 한 번에 출력할 수 있는 자산 수 상한 — 브라우저 인쇄가 버틸 수 있는 범위. */
 const MAX_LABELS = 500;
@@ -76,7 +76,7 @@ export default async function LabelsPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 print:max-w-none print:p-0">
-      <h1 className="no-print mb-4 text-xl font-bold text-slate-900">바코드 라벨 출력</h1>
+      <h1 className="no-print mb-4 text-xl font-bold text-slate-900">QR 라벨 출력</h1>
       {params.created === '1' && assets.length === 1 ? (
         <div
           role="status"
