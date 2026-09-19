@@ -34,9 +34,11 @@ export type LabelAsset = {
   deptName: string | null;
 };
 
-// v2: 바코드(1D) → QR 로 바뀌며 `barcodeHeightMm` 이 `qrSizeMm` 으로 교체됐습니다.
-// 예전 설정을 그대로 얹으면 QR 크기가 기본값에 머물러 혼란스러우므로 키를 올립니다.
-const STORAGE_KEY = 'cam.labelSettings.v2';
+// v3: 규격 목록을 브라더 DK-11204 + Letter 라벨지로 정리하면서 프리셋 id 가
+// 바뀌었습니다. 예전 설정이 남아 있으면 목록에 없는 규격을 가리켜 규격 칸이
+// 비어 보이므로 키를 올려 새 기본값에서 시작하게 합니다.
+// (v2 는 바코드(1D) → QR 전환 때 `barcodeHeightMm` → `qrSizeMm` 교체 건이었습니다.)
+const STORAGE_KEY = 'cam.labelSettings.v3';
 
 type Settings = {
   presetId: string;
