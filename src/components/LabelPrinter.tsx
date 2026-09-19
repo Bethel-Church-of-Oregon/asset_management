@@ -598,10 +598,12 @@ function NumField({
 
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-slate-600">{label}</span>
+      {/* 규격 select 와 같은 `field-label` · `field-input` 을 씁니다 — 라벨 글자
+          크기나 입력칸 높이가 다르면 나란히 놓았을 때 칸 테두리가 어긋납니다. */}
+      <span className="field-label">{label}</span>
       <input
         type="number"
-        className={`field-input mono !py-1.5 text-sm ${
+        className={`field-input mono ${
           error ? 'border-red-400 focus:border-red-500 focus:ring-red-500/25' : ''
         }`}
         value={text}
