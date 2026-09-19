@@ -76,13 +76,13 @@ export const LABEL_PRESETS: LabelPreset[] = [
   {
     id: 'roll-54x17',
     name: 'Brother DK-11204 (54 × 17 mm)',
-    note: '소형 비품용. QR 12mm 에 번호·자산명이 들어갑니다 (장소·팀명까지 켜면 빠듯합니다).',
+    note: '소형 비품용. QR 15mm 에 번호·자산명이 들어갑니다 (장소·팀명까지 켜면 빠듯합니다).',
     kind: 'roll',
     widthMm: 54,
     heightMm: 17,
-    paddingMm: 2,
-    qrSizeMm: 12,
-    fontScale: 0.85,
+    paddingMm: 0.5,
+    qrSizeMm: 15,
+    fontScale: 1.2,
     cols: 1,
     rows: 1,
     pageMarginTopMm: 0,
@@ -211,7 +211,9 @@ export const LABEL_PRESETS: LabelPreset[] = [
   },
 ];
 
-export const DEFAULT_PRESET_ID = 'roll-62x29';
+// 교회가 실제로 쓰는 롤이 DK-11204 다. 기본값이 곧 대부분의 출력이므로
+// 여기를 맞춰 두면 매번 규격을 고르지 않아도 된다.
+export const DEFAULT_PRESET_ID = 'roll-54x17';
 
 export function findPreset(id: string): LabelPreset {
   return LABEL_PRESETS.find((p) => p.id === id) ?? LABEL_PRESETS[0];
@@ -274,14 +276,12 @@ export const FONT_BASE_PT = {
 const QR_MODULES = 21;
 
 /**
- * QR 과 오른쪽 글자 칸 사이의 간격 (mm).
+ * QR 상자와 오른쪽 글자 칸 사이의 간격 (mm).
  *
- * 보기 좋으라고 두는 값이 아니라 **QR 의 정적여백**입니다. 글자가 이 안으로
- * 들어오면 디코더가 심볼 경계를 못 찾습니다. 그래서 고정값이 아니라 모듈 크기에
- * 비례합니다 — QR 이 커지면 모듈도 커지고, 필요한 여백도 같이 커집니다.
- *
- * 라벨 가장자리 쪽은 인쇄되지 않는 흰 바탕이 이어져서 `paddingMm` 만으로도
- * 충분하지만, 글자 쪽은 실제로 잉크가 찍히므로 규격대로 4모듈을 확보합니다.
+ * 규격상의 정적여백 4모듈은 `QrCode` 가 viewBox 안에 이미 그려 넣습니다 —
+ * 즉 상자 가장자리는 이미 흰 여백이라 글자가 심볼에 닿지 않습니다. 이 간격은
+ * 그 위에 더하는 **눈에 보이는 여백**이고, QR 이 커지면 같이 커지도록 상자
+ * 크기에 비례시킵니다.
  *
  * **`LabelCell` 과 같아야 합니다.**
  */
@@ -300,8 +300,8 @@ export const DEFAULT_CONTENT: LabelContent = {
   showChurchName: false,
   // 표시 토글은 꺼둔 채 이름만 미리 채워, 켤 때 다시 타이핑하지 않게 합니다.
   churchName: ORG_NAME,
-  qrSizeMm: 21,
-  fontScale: 1.15,
+  qrSizeMm: 15,
+  fontScale: 1.2,
   copies: 1,
 };
 

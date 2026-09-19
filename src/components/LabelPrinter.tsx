@@ -57,7 +57,11 @@ function defaultSettings(): Settings {
     layout: presetToLayout(preset),
     content: { ...DEFAULT_CONTENT, ...presetContentDefaults(preset) },
     skipCells: 0,
-    rotate: false,
+    // 기본 규격인 DK-11204 는 어느 드라이버에서도 세로(17 × 54)로만 나옵니다 —
+    // AirPrint 도, 브라더 정품 드라이버도 가로 규격을 주지 않습니다. 꺼둔 채로
+    // 두면 첫 출력이 반드시 어긋나 라벨 한 장을 버리게 되므로 켜 둡니다.
+    // 가로 규격이 있는 프린터(예: DK-11209 + 정품 드라이버)에서는 끄면 됩니다.
+    rotate: true,
   };
 }
 
@@ -76,7 +80,7 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
           layout: { ...current.layout, ...parsed.layout },
           content: { ...current.content, ...parsed.content },
           skipCells: parsed.skipCells ?? 0,
-          rotate: parsed.rotate ?? false,
+          rotate: parsed.rotate ?? current.rotate,
         }));
       }
     } catch {
@@ -394,7 +398,7 @@ export default function LabelPrinter({ assets }: { assets: LabelAsset[] }) {
           <strong className="font-semibold">인쇄 팁</strong> — 브라우저 인쇄 창에서
           <strong> 배율(Scale)은 100%</strong>, <strong>여백(Margins)은 없음</strong>,
           <strong> 머리글·바닥글은 해제</strong>로 두세요. 라벨 프린터는 프린터 설정에서 용지 종류를
-          실제 라벨 규격(예: DK-11209)으로 먼저 지정해야 크기가 맞습니다. 용지 목록에 가로 규격이
+          실제 라벨 규격(예: DK-11204)으로 먼저 지정해야 크기가 맞습니다. 용지 목록에 가로 규격이
           없고 세로만 있으면(아이폰·아이패드는 항상 그렇습니다) 위의 <strong>90° 회전 출력</strong>
           을 켜세요 — 인쇄 창의 용지·방향 설정으로는 바꿀 수 없습니다. 첫 출력은 1~2장만 시험 인쇄해
           스캐너로 읽히는지 확인하시길 권합니다.
@@ -466,9 +470,14 @@ function LabelCell({
 
   // 왼쪽 QR · 오른쪽 글자. 줄 간격과 칸 사이 간격은 `measureContentFit` 과
   // 같은 상수를 써야 넘침 경고가 거짓말을 하지 않습니다.
+  //
+  // `justify-center` 로 **QR + 글자 덩어리를 통째로 가운데** 놓습니다. 글자 칸을
+  // `flex-1` 로 늘리면 덩어리가 왼쪽에 붙고 오른쪽만 비어 보입니다. 대신 글자
+  // 칸은 내용 너비로 두되 `min-w-0` 으로 줄어들 수 있게 해서, 이름이 길면
+  // 넘치지 않고 잘립니다. 각 줄은 같은 칸 안에 있으므로 왼쪽이 맞습니다.
   return (
     <div
-      className="label-cell flex items-center overflow-hidden rounded border border-slate-300 bg-white leading-tight text-black"
+      className="label-cell flex items-center justify-center overflow-hidden rounded border border-slate-300 bg-white leading-tight text-black"
       style={{
         width: `${layout.widthMm}mm`,
         height: `${layout.heightMm}mm`,
@@ -484,10 +493,7 @@ function LabelCell({
         />
       </div>
 
-      <div
-        className="flex min-w-0 flex-1 flex-col justify-center"
-        style={{ gap: `${LINE_GAP_MM}mm` }}
-      >
+      <div className="flex min-w-0 flex-col justify-center" style={{ gap: `${LINE_GAP_MM}mm` }}>
         {content.showChurchName && content.churchName ? (
           <div
             style={{ fontSize: pt(FONT_BASE_PT.churchName), letterSpacing: '0.02em' }}
@@ -498,7 +504,7 @@ function LabelCell({
         ) : null}
 
         <div
-          className="mono w-full truncate font-bold"
+          className="mono w-full truncate"
           style={{ fontSize: pt(FONT_BASE_PT.assetNo), letterSpacing: '0.04em' }}
         >
           {asset.assetNo}
@@ -523,6 +529,22 @@ function LabelCell({
   );
 }
 
+/** 12 → "12", 0.6 → "0.6" — 안내 문구에 소수점 뒤 0 이 붙지 않게 합니다. */
+function trimNumber(value: number): string {
+  return String(Number(value.toFixed(2)));
+}
+
+/**
+ * 라벨 치수 입력칸.
+ *
+ * **입력 중에는 값을 보정하지 않습니다.** 예전에는 `Math.max(min, …)` 로 즉시
+ * 끌어올렸는데, 그러면 최소 20 인 칸에 `15` 를 치려고 `1` 을 누르는 순간 `20`
+ * 이 되어 버려 원하는 값을 칠 수가 없었습니다. 그래서 타이핑은 그대로 두고,
+ * 범위를 벗어나면 아래에 빨간 안내를 띄웁니다.
+ *
+ * 범위 밖 값은 위로 전달하지 않습니다 — 가로 0mm 같은 값이 미리보기와 인쇄
+ * 계산으로 새어 나가면 라벨이 깨집니다. 마지막으로 유효했던 값이 유지됩니다.
+ */
 function NumField({
   label,
   value,
@@ -538,21 +560,55 @@ function NumField({
   min: number;
   max: number;
 }) {
+  const [text, setText] = useState(() => trimNumber(value));
+
+  // 규격을 바꾸면 값이 밖에서 통째로 갈아끼워집니다. 그때는 입력칸도 따라갑니다.
+  useEffect(() => {
+    setText((current) => (Number(current) === value ? current : trimNumber(value)));
+  }, [value]);
+
+  const parsed = Number(text);
+  const empty = text.trim() === '';
+  const invalid = empty || !Number.isFinite(parsed);
+  const tooSmall = !invalid && parsed < min;
+  const tooLarge = !invalid && parsed > max;
+  const error = empty
+    ? '값을 입력하세요.'
+    : invalid
+      ? '숫자만 입력할 수 있습니다.'
+      : tooSmall
+        ? `최소 ${trimNumber(min)} 이상이어야 합니다.`
+        : tooLarge
+          ? `최대 ${trimNumber(max)} 이하여야 합니다.`
+          : null;
+
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-medium text-slate-600">{label}</span>
       <input
         type="number"
-        className="field-input mono !py-1.5 text-sm"
-        value={value}
+        className={`field-input mono !py-1.5 text-sm ${
+          error ? 'border-red-400 focus:border-red-500 focus:ring-red-500/25' : ''
+        }`}
+        value={text}
         step={step}
         min={min}
         max={max}
+        aria-invalid={error ? true : undefined}
         onChange={(e) => {
+          setText(e.target.value);
           const next = Number(e.target.value);
-          if (Number.isFinite(next)) onChange(Math.min(max, Math.max(min, next)));
+          if (e.target.value.trim() !== '' && Number.isFinite(next) && next >= min && next <= max) {
+            onChange(next);
+          }
+        }}
+        onBlur={() => {
+          // 칸을 떠날 때도 틀린 값을 그대로 두면 무엇이 적용 중인지 헷갈립니다.
+          // 실제로 쓰이고 있는 값으로 되돌려 놓습니다.
+          if (error) setText(trimNumber(value));
         }}
       />
+      {error ? <p className="mt-1 text-xs font-medium text-red-600">{error}</p> : null}
     </label>
   );
 }
