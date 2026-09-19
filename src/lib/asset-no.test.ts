@@ -248,24 +248,24 @@ test('가장 작은 프리셋에서도 QR 모듈이 스캔 가능한 굵기다',
   }
 });
 
-test('QR 정적여백이 사방으로 확보된다', () => {
-  // QR 은 심볼 둘레에 4모듈의 빈 여백이 있어야 디코더가 경계를 찾습니다.
-  //  - 글자 쪽: 실제로 잉크가 찍히므로 규격대로 4모듈.
-  //  - 라벨 가장자리 쪽: 인쇄되지 않는 흰 바탕이 이어지므로 라벨 높이로 잽니다.
+test('QR 정적여백이 심볼 상자 안에 들어 있다', () => {
+  // `QrCode` 는 정적여백 4모듈을 viewBox 에 함께 그린다. 즉 상자만 라벨 안에
+  // 들어가면 규격 여백은 자동으로 확보되고, `qrGapMm()` 과 `paddingMm` 은
+  // 그 위에 더해지는 덤이다. (실측: DK-11204 의 15mm 상자에서 심볼 위아래로
+  // 2.99 / 3.12mm 의 흰 바탕이 남았고 10·15·25cm 에서 모두 디코딩됐다.)
   const m = qrMatrix(assetNoBarcodeValue(EXAMPLE_ASSET_NO));
+  assert.equal(m.countWithQuietZone, m.count + QR_QUIET_ZONE_MODULES * 2);
+
   for (const preset of LABEL_PRESETS) {
     const moduleMm = qrModuleMm(m, preset.qrSizeMm);
-
-    const toText = qrGapMm(preset.qrSizeMm) / moduleMm;
-    assert.ok(toText >= QR_QUIET_ZONE_MODULES, `${preset.name}: 글자 쪽 ${toText.toFixed(1)}모듈`);
-
-    const vertical = (preset.heightMm - preset.qrSizeMm) / 2 / moduleMm;
-    assert.ok(vertical >= QR_QUIET_ZONE_MODULES, `${preset.name}: 상하 ${vertical.toFixed(1)}모듈`);
-
-    // 왼쪽은 라벨 끝이라 그 너머를 여백으로 칠 수 없습니다. 2모듈이면 휴대폰
-    // 디코더가 충분히 읽습니다 (규격 4모듈은 레이저 스캐너 기준의 보수적인 값).
-    const left = preset.paddingMm / moduleMm;
-    assert.ok(left >= 2, `${preset.name}: 왼쪽 ${left.toFixed(1)}모듈`);
+    const symbolMm = moduleMm * m.count;
+    const builtInQuietMm = (preset.qrSizeMm - symbolMm) / 2;
+    assert.ok(
+      builtInQuietMm / moduleMm >= QR_QUIET_ZONE_MODULES - 0.01,
+      `${preset.name}: 내장 정적여백 ${(builtInQuietMm / moduleMm).toFixed(1)}모듈`,
+    );
+    // 글자가 상자에 닿지 않도록 최소한의 시각적 간격도 남는지.
+    assert.ok(qrGapMm(preset.qrSizeMm) > 0, `${preset.name}: 글자 간격이 없다`);
   }
 });
 
@@ -283,6 +283,8 @@ test('QR 크기가 라벨 안쪽 높이를 넘지 않는다', () => {
   for (const preset of LABEL_PRESETS) {
     const inner = preset.heightMm - preset.paddingMm * 2;
     assert.ok(preset.qrSizeMm <= inner, `${preset.name}: QR ${preset.qrSizeMm}mm > ${inner}mm`);
+    // 라벨 밖으로 나가면 QR 이 통째로 잘린다. 안쪽 여백과 별개로 확인한다.
+    assert.ok(preset.qrSizeMm < preset.heightMm, `${preset.name}: QR 이 라벨 높이 이상이다`);
   }
 });
 

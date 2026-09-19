@@ -70,11 +70,16 @@ export function qrMatrix(value: string): QrMatrix {
 }
 
 /**
- * 심볼 한 변이 `sizeMm` 인 QR 의 모듈 폭(mm). 정적여백은 빼고 셉니다.
+ * 한 변이 `sizeMm` 인 QR **상자**의 모듈 폭(mm).
+ *
+ * `QrCode` 는 정적여백까지 viewBox 에 넣어 그리므로, 화면·라벨에서 차지하는
+ * 상자 한 변은 심볼 21모듈이 아니라 정적여백을 더한 29모듈입니다. 따라서
+ * 검은 심볼 자체는 상자의 21/29 (약 72%) 크기입니다 — 여기서 21 로 나누면
+ * 모듈을 1.4배로 과대평가하게 됩니다.
  *
  * 스캔이 되는지는 결국 이 값이 정합니다 — 휴대폰으로 읽으려면 0.4mm 는 넘어야
  * 합니다 (0.43mm 짜리는 640×480 카메라로 15cm 거리에서 실패했습니다).
  */
 export function qrModuleMm(matrix: QrMatrix, sizeMm: number): number {
-  return sizeMm / matrix.count;
+  return sizeMm / matrix.countWithQuietZone;
 }
