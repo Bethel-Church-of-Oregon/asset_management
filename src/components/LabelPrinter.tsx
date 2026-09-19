@@ -521,11 +521,11 @@ function LabelCell({
           </div>
         ) : null}
 
+        {/* 라벨의 글자는 전부 검정입니다 — 셀 루트의 `text-black` 을 그대로 물려받고
+            여기서 색을 덮어쓰지 않습니다. 예전에는 이 줄만 `text-neutral-600` 이었는데,
+            감열 프린터는 회색을 점으로 흩어 찍기 때문에 작은 글자가 흐려집니다. */}
         {metaParts.length > 0 ? (
-          <div
-            className="w-full truncate text-neutral-600"
-            style={{ fontSize: pt(FONT_BASE_PT.meta) }}
-          >
+          <div className="w-full truncate" style={{ fontSize: pt(FONT_BASE_PT.meta) }}>
             {metaParts.join(' · ')}
           </div>
         ) : null}
