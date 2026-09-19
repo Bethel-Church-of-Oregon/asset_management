@@ -258,6 +258,15 @@ export type LabelContent = {
 };
 
 /**
+ * 자산번호와 자산명은 **같은 크기**로 둡니다.
+ *
+ * 둘을 한 상수로 묶어 두는 이유는, 한쪽만 고쳐서 크기가 어긋나는 일을 막기
+ * 위해서입니다 (단위테스트도 같은지 확인합니다). 번호와 이름은 `mono` 여부와
+ * 자간으로 구분되므로 크기까지 다르게 할 필요가 없습니다.
+ */
+const BODY_PT = 6.5;
+
+/**
  * 배율 1.0 기준 글자 크기 (pt).
  *
  * 라벨은 mm 단위로 고정된 물리 매체라, 화면용 상대 단위 대신 pt 로 못박고
@@ -265,8 +274,8 @@ export type LabelContent = {
  */
 export const FONT_BASE_PT = {
   churchName: 5,
-  assetNo: 8.5,
-  name: 6.5,
+  assetNo: BODY_PT,
+  name: BODY_PT,
   meta: 5.5,
 } as const;
 

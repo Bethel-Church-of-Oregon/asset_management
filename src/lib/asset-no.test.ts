@@ -25,6 +25,7 @@ import * as zx from '@zxing/library';
 import { QR_QUIET_ZONE_MODULES, qrMatrix, qrModuleMm } from './qr';
 import {
   DEFAULT_CONTENT,
+  FONT_BASE_PT,
   LABEL_PRESETS,
   qrGapMm,
   measureContentFit,
@@ -277,6 +278,11 @@ test('모든 프리셋이 기본 표시 항목을 담을 수 있다', () => {
     const fit = measureContentFit(presetToLayout(preset), content, false);
     assert.ok(fit.fits, `${preset.name}: 기본 설정이 넘칩니다 (${fit.neededMm.toFixed(1)}mm)`);
   }
+});
+
+test('자산번호와 자산명은 같은 글자 크기다', () => {
+  // 라벨에서 둘을 같은 무게로 읽게 하려는 의도다. 한쪽만 고치면 여기서 걸린다.
+  assert.equal(FONT_BASE_PT.assetNo, FONT_BASE_PT.name);
 });
 
 test('QR 크기가 라벨 안쪽 높이를 넘지 않는다', () => {
