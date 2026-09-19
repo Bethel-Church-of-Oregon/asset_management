@@ -10,9 +10,11 @@ type CameraState = 'idle' | 'starting' | 'running' | 'denied' | 'unsupported' | 
 /**
  * 자산번호 조회 입력창.
  *
- * 1) USB/블루투스 바코드 스캐너 — 대부분 키보드처럼 값을 입력한 뒤 Enter 를 보냅니다.
+ * 1) USB/블루투스 스캐너 — 대부분 키보드처럼 값을 입력한 뒤 Enter 를 보냅니다.
  *    그래서 이 입력창에 포커스만 있으면 별도 설정 없이 바로 동작합니다.
- * 2) 휴대폰 카메라 — 버튼을 누르면 zxing 으로 Code128/QR 을 인식합니다.
+ *    다만 라벨이 QR 이므로 1D 레이저가 아니라 2D 이미저여야 합니다.
+ * 2) 휴대폰 카메라 — 버튼을 누르면 zxing 으로 인식합니다. Code 128 도 목록에
+ *    남겨 둡니다 — 예전에 찍어 붙인 1D 라벨이 그대로 읽혀야 하기 때문입니다.
  * 3) 직접 입력 — 하이픈은 있어도 없어도 됩니다.
  */
 export default function ScanBox({ initialValue = '' }: { initialValue?: string }) {
@@ -74,8 +76,20 @@ export default function ScanBox({ initialValue = '' }: { initialValue?: string }
       const video = videoRef.current;
       if (!video) return;
 
+      // 해상도를 지정하지 않으면 브라우저가 640×480 을 줍니다. 작은 라벨에서는
+      // 그 화질로 모자랍니다 — DK-11204(54 × 17mm) 는 모듈 폭이 0.46mm 라
+      // 640×480 으로 15cm 거리에서 찍으면 모듈당 1.4픽셀뿐이라 디코딩이
+      // 실패합니다. 휴대폰은 5~6cm 보다 가까우면 초점을 못 잡으므로 "더 가까이"
+      // 로는 해결되지 않습니다. 1920 을 요청하면 같은 거리에서 4.2픽셀이 됩니다.
+      // `ideal` 이라 지원하지 못하는 기기는 가능한 최대치로 알아서 낮춥니다.
       const controls = await reader.decodeFromConstraints(
-        { video: { facingMode: { ideal: 'environment' } } },
+        {
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+        },
         video,
         (result) => {
           if (!result) return;
@@ -153,7 +167,7 @@ export default function ScanBox({ initialValue = '' }: { initialValue?: string }
           </button>
         )}
         <p className="text-xs text-slate-500">
-          USB 바코드 스캐너는 입력창을 클릭한 뒤 그냥 스캔하면 됩니다.
+          USB 스캐너(2D 이미저)는 입력창을 클릭한 뒤 그냥 스캔하면 됩니다.
         </p>
       </div>
 
@@ -177,7 +191,7 @@ export default function ScanBox({ initialValue = '' }: { initialValue?: string }
           playsInline
         />
         <p className="bg-slate-900 py-1.5 text-center text-xs text-slate-300">
-          {camera === 'starting' ? '카메라 준비 중...' : '바코드를 화면 가운데에 맞춰 주세요'}
+          {camera === 'starting' ? '카메라 준비 중...' : 'QR 을 화면 가운데에 맞춰 주세요'}
         </p>
       </div>
 
