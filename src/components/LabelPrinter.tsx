@@ -19,6 +19,7 @@ import {
   presetContentDefaults,
   presetToLayout,
   qrGapMm,
+  qrQuietZoneMm,
   sheetCapacity,
 } from '@/lib/labels';
 import { formatDate } from '@/lib/format';
@@ -482,6 +483,10 @@ function LabelCell({
         width: `${layout.widthMm}mm`,
         height: `${layout.heightMm}mm`,
         padding: `${layout.paddingMm}mm`,
+        // QR 상자 안에 정적여백이 들어 있어서, 상자를 그대로 가운데 맞추면 잉크가
+        // 그만큼 오른쪽으로 치우쳐 보입니다. 오른쪽에 같은 폭을 더해 균형을 잡으면
+        // 눈에 보이는 좌우 여백이 같아집니다.
+        paddingRight: `${layout.paddingMm + qrQuietZoneMm(qrSizeMm)}mm`,
         gap: `${qrGapMm(qrSizeMm)}mm`,
       }}
     >

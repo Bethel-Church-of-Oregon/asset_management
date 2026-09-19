@@ -284,13 +284,29 @@ export const FONT_BASE_PT = {
  */
 const QR_MODULES = 21;
 
+/** 정적여백까지 포함한 QR 상자 한 변의 모듈 수 (21 + 4 + 4). */
+const QR_BOX_MODULES = QR_MODULES + QR_QUIET_ZONE_MODULES * 2;
+
+/**
+ * QR 상자 안쪽에 그려지는 정적여백의 실제 폭 (mm).
+ *
+ * `QrCode` 는 규격상의 4모듈을 viewBox 안에 함께 그립니다. 그래서 상자의
+ * 좌우 가장자리에는 이만큼의 흰 띠가 이미 들어 있습니다 — 레이아웃에서 상자를
+ * 가운데 맞추면 **잉크는 이 폭만큼 오른쪽으로 치우쳐 보입니다.**
+ * `LabelCell` 이 이 값으로 오른쪽 여백을 더해 균형을 잡습니다.
+ */
+export function qrQuietZoneMm(qrSizeMm: number): number {
+  return (QR_QUIET_ZONE_MODULES * qrSizeMm) / QR_BOX_MODULES;
+}
+
 /**
  * QR 상자와 오른쪽 글자 칸 사이의 간격 (mm).
  *
- * 규격상의 정적여백 4모듈은 `QrCode` 가 viewBox 안에 이미 그려 넣습니다 —
- * 즉 상자 가장자리는 이미 흰 여백이라 글자가 심볼에 닿지 않습니다. 이 간격은
- * 그 위에 더하는 **눈에 보이는 여백**이고, QR 이 커지면 같이 커지도록 상자
- * 크기에 비례시킵니다.
+ * 규격상의 정적여백은 상자 안에 이미 있으므로(`qrQuietZoneMm`), 이 값은 순수하게
+ * **눈에 보이는 간격**입니다. QR 이 커지면 같이 커지도록 비례시킵니다.
+ *
+ * 좁히면 글자 자리가 늘지만, 가운데 정렬이라 그만큼 좌우 바깥 여백이 넓어집니다.
+ * 바깥 여백을 줄이려면 이 값이 아니라 QR·글자를 키우는 쪽이 맞습니다.
  *
  * **`LabelCell` 과 같아야 합니다.**
  */
