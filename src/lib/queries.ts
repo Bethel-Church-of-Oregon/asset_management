@@ -8,6 +8,7 @@ import {
   buildings,
   departments,
   maintenanceLogs,
+  importBatches,
   users,
   type AssetStatus,
 } from '@/db/schema';
@@ -522,4 +523,62 @@ export async function listAssetsForExport(params: AssetListParams, limit = 10000
     .where(filters.length > 0 ? and(...filters) : undefined)
     .orderBy(...orderBy)
     .limit(limit);
+}
+
+/**
+ * 접두사(연도+건물+부서)별로 이미 쓰인 가장 큰 고유번호.
+ *
+ * 일괄 등록이 행마다 `getNextSeq` 를 부르면 조회가 행 수만큼 나가고, 같은 접두사가
+ * 여러 줄일 때 같은 번호를 두 번 줍니다. 한 번에 받아 메모리에서 이어 붙입니다.
+ */
+export async function getMaxSeqByPrefix(): Promise<Map<string, number>> {
+  const rows = await db
+    .select({
+      yearCode: assets.yearCode,
+      buildingCode: assets.buildingCode,
+      deptCode: assets.deptCode,
+      max: sql<number>`max(${assets.seq}::int)`,
+    })
+    .from(assets)
+    .groupBy(assets.yearCode, assets.buildingCode, assets.deptCode);
+
+  return new Map(
+    rows.map((r) => [`${r.yearCode}${r.buildingCode}${r.deptCode}`, Number(r.max ?? 0)]),
+  );
+}
+
+/** 최근 엑셀 일괄 등록 묶음 — 되돌리기 목록에 씁니다. */
+export async function listImportBatches(limit = 5) {
+  const rows = await db
+    .select({
+      id: importBatches.id,
+      fileName: importBatches.fileName,
+      rowCount: importBatches.rowCount,
+      createdAt: importBatches.createdAt,
+      userName: users.name,
+      // 되돌리기는 **남아 있는** 자산만 지웁니다. 이미 지워진 건 수를 함께 보여
+      // 주지 않으면 "52건 등록인데 왜 48건만 취소되지" 로 헷갈립니다.
+      remaining: sql<number>`(
+        select count(*)::int from ${assets} where ${assets.importBatchId} = ${importBatches.id}
+      )`,
+    })
+    .from(importBatches)
+    .leftJoin(users, eq(importBatches.createdBy, users.id))
+    .orderBy(desc(importBatches.createdAt))
+    .limit(limit);
+  return rows;
+}
+
+/** 묶음에 딸린 자산 중 등록 후 손댄 것이 있는지 — 되돌리기 전에 경고합니다. */
+export async function countTouchedInBatch(batchId: number): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(assets)
+    .where(
+      and(
+        eq(assets.importBatchId, batchId),
+        sql`${assets.updatedAt} > ${assets.createdAt} + interval '5 seconds'`,
+      ),
+    );
+  return Number(row?.count ?? 0);
 }

@@ -55,6 +55,21 @@ export const departments = pgTable('departments', {
   isActive: boolean('is_active').notNull().default(true),
 });
 
+/**
+ * 엑셀 일괄 등록 한 번 = 한 묶음.
+ *
+ * 묶음을 남기는 이유는 **되돌리기** 때문입니다. 잘못 올린 수백 건을 하나씩 지우는
+ * 것은 현실적이지 않고, 자산번호는 폐기해도 재사용하지 않으므로 잘못 만든 번호는
+ * 완전 삭제로만 회수됩니다.
+ */
+export const importBatches = pgTable('import_batches', {
+  id: serial('id').primaryKey(),
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  rowCount: integer('row_count').notNull(),
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const assets = pgTable(
   'assets',
   {
@@ -97,6 +112,14 @@ export const assets = pgTable(
     disposalReason: varchar('disposal_reason', { length: 200 }),
     disposalNote: text('disposal_note'),
 
+    /**
+     * 엑셀 일괄 등록으로 만들어진 자산이면 그 묶음. 손으로 등록한 자산은 null 입니다.
+     * 묶음을 지워도(`set null`) 자산은 남습니다 — 되돌리기는 자산을 먼저 지웁니다.
+     */
+    importBatchId: integer('import_batch_id').references(() => importBatches.id, {
+      onDelete: 'set null',
+    }),
+
     createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
     updatedBy: integer('updated_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -110,6 +133,8 @@ export const assets = pgTable(
     index('assets_name_idx').on(table.name),
     // Backs "next sequence number" lookups when registering an asset.
     index('assets_prefix_idx').on(table.yearCode, table.buildingCode, table.deptCode),
+    // 일괄 등록 되돌리기가 묶음 단위로 긁습니다.
+    index('assets_import_batch_idx').on(table.importBatchId),
   ],
 );
 
@@ -144,6 +169,7 @@ export const maintenanceLogsRelations = relations(maintenanceLogs, ({ one }) => 
 export type Asset = typeof assets.$inferSelect;
 export type NewAsset = typeof assets.$inferInsert;
 export type MaintenanceLog = typeof maintenanceLogs.$inferSelect;
+export type ImportBatch = typeof importBatches.$inferSelect;
 export type Building = typeof buildings.$inferSelect;
 export type Department = typeof departments.$inferSelect;
 export type User = typeof users.$inferSelect;

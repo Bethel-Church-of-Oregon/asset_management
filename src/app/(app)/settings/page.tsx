@@ -1,10 +1,16 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import AssetImport from '@/components/AssetImport';
 import LookupManager from '@/components/LookupManager';
 import UserManager from '@/components/UserManager';
 import { requireSession } from '@/lib/auth';
 import { canAdmin } from '@/lib/session';
-import { getLookupsWithUsage, listUsers } from '@/lib/queries';
+import {
+  countTouchedInBatch,
+  getLookupsWithUsage,
+  listImportBatches,
+  listUsers,
+} from '@/lib/queries';
 import { EXAMPLE_ASSET_NO } from '@/lib/asset-no';
 
 export const metadata: Metadata = { title: '설정' };
@@ -26,7 +32,15 @@ export default async function SettingsPage() {
     );
   }
 
-  const [lookups, users] = await Promise.all([getLookupsWithUsage(), listUsers()]);
+  const [lookups, users, batchRows] = await Promise.all([
+    getLookupsWithUsage(),
+    listUsers(),
+    listImportBatches(),
+  ]);
+  // 되돌리기 경고에 쓸 '등록 후 수정된 건수' 는 묶음마다 세어야 합니다.
+  const batches = await Promise.all(
+    batchRows.map(async (b) => ({ ...b, touched: await countTouchedInBatch(b.id) })),
+  );
 
   return (
     <div className="space-y-4">
@@ -51,8 +65,8 @@ export default async function SettingsPage() {
             아래 &lsquo;건물 · 위치&rsquo;에서 관리
           </li>
           <li>
-            <span className="mono font-semibold text-slate-800">DD</span> 관리부서 번호 2자리 —
-            아래 &lsquo;관리부서&rsquo;에서 관리
+            <span className="mono font-semibold text-slate-800">DD</span> 관리부서 번호 2자리 — 아래
+            &lsquo;관리부서&rsquo;에서 관리
           </li>
           <li>
             <span className="mono font-semibold text-slate-800">SSSS</span> 물품 고유번호 4자리 —
@@ -79,6 +93,15 @@ export default async function SettingsPage() {
           rows={lookups.departments}
         />
       </div>
+
+      <section className="card p-5">
+        <h2 className="text-sm font-bold text-slate-900">자산 일괄 등록</h2>
+        <p className="mb-4 mt-1 text-xs text-slate-500">
+          엑셀 파일을 올리면 한 번에 등록합니다. 자산번호는 앱이 매깁니다. 관리자 전용입니다 — 잘못
+          올린 자산은 번호를 영구히 쓰게 되므로 미리보기를 꼭 확인하세요.
+        </p>
+        <AssetImport batches={batches} />
+      </section>
 
       <UserManager users={users} currentUserId={session.userId} />
 

@@ -32,7 +32,15 @@ import {
   presetContentDefaults,
   presetToLayout,
 } from './labels';
-import { cleanMoneyInput, formatMoney, formatUsd, isMoneyAmount, parseMoneyInput } from './format';
+import {
+  cleanMoneyInput,
+  currentYear,
+  formatMoney,
+  formatUsd,
+  isMoneyAmount,
+  parseMoneyInput,
+} from './format';
+import { IMPORT_COLUMNS, IMPORT_MAX_ROWS, planImport, type ImportContext } from './asset-import';
 import { cleanUsername, isUsername, usernameFromEmail } from './username';
 
 let passed = 0;
@@ -292,6 +300,135 @@ test('QR 크기가 라벨 안쪽 높이를 넘지 않는다', () => {
     // 라벨 밖으로 나가면 QR 이 통째로 잘린다. 안쪽 여백과 별개로 확인한다.
     assert.ok(preset.qrSizeMm < preset.heightMm, `${preset.name}: QR 이 라벨 높이 이상이다`);
   }
+});
+
+/* ── 엑셀 일괄 등록 ──────────────────────────────────────────────────────── */
+
+const IMPORT_CTX: ImportContext = {
+  buildings: [
+    { code: '01', name: '비전성전' },
+    { code: '02', name: '은혜성전' },
+  ],
+  departments: [
+    { code: '03', name: '교육부' },
+    { code: '05', name: '찬양부' },
+  ],
+  maxSeqByPrefix: new Map(),
+};
+const C = IMPORT_COLUMNS;
+/** 필수 열만 채운 한 줄. */
+const row = (over: Record<string, string> = {}) => ({
+  [C.name]: '유아부실 TV',
+  [C.buildingName]: '비전성전',
+  [C.deptName]: '교육부',
+  ...over,
+});
+
+test('일괄 등록이 같은 접두사에 번호를 이어서 매긴다', () => {
+  const plan = planImport([row(), row({ [C.name]: '책상' }), row({ [C.name]: '의자' })], {
+    ...IMPORT_CTX,
+    maxSeqByPrefix: new Map([[`${toYearCode(currentYear())}0103`, 6]]),
+  });
+  assert.equal(plan.errors.length, 0);
+  assert.equal(plan.fatal.length, 0);
+  const yy = toYearCode(currentYear());
+  assert.deepEqual(
+    plan.rows.map((r) => r.assetNo),
+    [`${yy}-0103-0007`, `${yy}-0103-0008`, `${yy}-0103-0009`],
+  );
+});
+
+test('접두사가 다르면 번호도 따로 센다', () => {
+  const plan = planImport([row(), row({ [C.buildingName]: '은혜성전' }), row()], IMPORT_CTX);
+  const yy = toYearCode(currentYear());
+  assert.deepEqual(
+    plan.rows.map((r) => r.assetNo),
+    [`${yy}-0103-0001`, `${yy}-0203-0001`, `${yy}-0103-0002`],
+  );
+});
+
+test('취득일자가 있으면 그 연도로 번호를 만든다', () => {
+  const plan = planImport([row({ [C.acquiredDate]: '2024-03-14' })], IMPORT_CTX);
+  assert.equal(plan.errors.length, 0);
+  assert.equal(plan.rows[0].assetNo, '24-0103-0001');
+  assert.equal(plan.rows[0].acquiredDate, '2024-03-14');
+});
+
+test('실패한 행은 번호를 쓰지 않는다', () => {
+  // 가운데 행이 실패해도 뒤 행이 번호를 건너뛰면 안 됩니다.
+  const plan = planImport([row(), row({ [C.buildingName]: '없는성전' }), row()], IMPORT_CTX);
+  assert.equal(plan.errors.length, 1);
+  assert.equal(plan.errors[0].rowNo, 3);
+  const yy = toYearCode(currentYear());
+  assert.deepEqual(
+    plan.rows.map((r) => r.assetNo),
+    [`${yy}-0103-0001`, `${yy}-0103-0002`],
+  );
+});
+
+test('건물·부서를 이름 대신 코드로 적어도 받는다', () => {
+  const plan = planImport([row({ [C.buildingName]: '01', [C.deptName]: '3' })], IMPORT_CTX);
+  assert.equal(plan.errors.length, 0);
+  assert.equal(plan.rows[0].buildingCode, '01');
+  assert.equal(plan.rows[0].deptCode, '03');
+});
+
+test('금액·날짜·수량 판정을 기존 규칙으로 돌린다', () => {
+  const plan = planImport(
+    [row({ [C.acquiredPrice]: '$1,299.99', [C.quantity]: '3', [C.warrantyUntil]: '2027-01-31' })],
+    IMPORT_CTX,
+  );
+  assert.equal(plan.errors.length, 0);
+  assert.equal(plan.rows[0].acquiredPrice, '1299.99');
+  assert.equal(plan.rows[0].quantity, 3);
+  assert.equal(plan.rows[0].warrantyUntil, '2027-01-31');
+});
+
+test('잘못된 값은 열 이름과 함께 알려 준다', () => {
+  const plan = planImport(
+    [row({ [C.acquiredPrice]: '백만원', [C.quantity]: '0', [C.acquiredDate]: '2024-02-30' })],
+    IMPORT_CTX,
+  );
+  assert.equal(plan.rows.length, 0);
+  const cols = plan.errors.map((e) => e.column).sort();
+  assert.deepEqual(cols, [C.acquiredDate, C.acquiredPrice, C.quantity].sort());
+});
+
+test('상태는 비우면 사용중, 폐기는 거부한다', () => {
+  const ok = planImport([row(), row({ [C.status]: '보관중' })], IMPORT_CTX);
+  assert.equal(ok.errors.length, 0);
+  assert.deepEqual(
+    ok.rows.map((r) => r.status),
+    ['in_use', 'idle'],
+  );
+
+  const bad = planImport([row({ [C.status]: '폐기' })], IMPORT_CTX);
+  assert.equal(bad.rows.length, 0);
+  assert.equal(bad.errors[0].column, C.status);
+});
+
+test('필수 열이 없으면 파일 전체를 거부한다', () => {
+  const plan = planImport([{ [C.name]: 'TV' }], IMPORT_CTX);
+  assert.equal(plan.rows.length, 0);
+  assert.ok(plan.fatal.some((m) => m.includes(C.buildingName)));
+  assert.ok(plan.fatal.some((m) => m.includes(C.deptName)));
+});
+
+test('행 수 상한을 넘으면 파일 전체를 거부한다', () => {
+  const many = Array.from({ length: IMPORT_MAX_ROWS + 1 }, () => row());
+  const plan = planImport(many, IMPORT_CTX);
+  assert.equal(plan.rows.length, 0);
+  assert.ok(plan.fatal[0].includes(String(IMPORT_MAX_ROWS)));
+});
+
+test('고유번호가 상한을 넘으면 그 행만 실패한다', () => {
+  const yy = toYearCode(currentYear());
+  const plan = planImport([row()], {
+    ...IMPORT_CTX,
+    maxSeqByPrefix: new Map([[`${yy}0103`, SEQ_MAX]]),
+  });
+  assert.equal(plan.rows.length, 0);
+  assert.ok(plan.errors[0].message.includes(String(SEQ_MAX)));
 });
 
 test('cleanMoneyInput strips currency formatting', () => {

@@ -23,6 +23,7 @@
     "@zxing/library": "^0.23.0",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.2",
+    "exceljs": "^4.4.0",
     "jose": "^6.2.10",
     "next": "^15.5.25",
     "pg": "^8.16.3",
