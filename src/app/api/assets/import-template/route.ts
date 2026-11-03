@@ -10,7 +10,7 @@ import { today } from '@/lib/format';
  * 일괄 등록 템플릿.
  *
  * 열 이름이 조금이라도 다르면 들여오기가 막히므로, 사람이 직접 만들게 두지 않고
- * 여기서 내려 줍니다. 두 번째 시트에 **그 교회에서 실제로 쓸 수 있는** 건물·부서
+ * 여기서 내려 줍니다. 두 번째 시트에 **그 교회에서 실제로 쓸 수 있는** 건물·사역원
  * 이름을 함께 넣습니다 — 안내 문구로는 오타를 못 막습니다.
  */
 export async function GET() {
@@ -75,10 +75,10 @@ export async function GET() {
         .join(' · ') + ' (폐기는 일괄 등록 불가)',
     ],
     ['', ''],
-    ['쓸 수 있는 건물/위치', ''],
+    ['쓸 수 있는 건물명', ''],
     ...lookups.buildings.map((b): [string, string] => [b.code, b.name]),
     ['', ''],
-    ['쓸 수 있는 관리부서', ''],
+    ['쓸 수 있는 사역원', ''],
     ...lookups.departments.map((d): [string, string] => [d.code, d.name]),
   ];
   for (const [a, b] of lines) guide.addRow([a, b]);

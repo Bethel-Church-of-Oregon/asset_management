@@ -101,7 +101,7 @@ export default function AssetTable({
               </th>
               <th className="px-3 py-2.5">자산번호</th>
               <th className="px-3 py-2.5">자산명</th>
-              <th className="px-3 py-2.5">관리팀 / 부서</th>
+              <th className="px-3 py-2.5">관리팀 / 사역원</th>
               <th className="px-3 py-2.5">장소</th>
               <th className="hidden px-3 py-2.5 lg:table-cell">모델 / S/N</th>
               <th className="px-3 py-2.5 text-right">취득가액</th>

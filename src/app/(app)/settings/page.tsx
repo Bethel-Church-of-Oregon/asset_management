@@ -61,12 +61,12 @@ export default async function SettingsPage() {
             <span className="mono font-semibold text-slate-800">YY</span> 취득 연도 2자리
           </li>
           <li>
-            <span className="mono font-semibold text-slate-800">BB</span> 건물/위치 번호 2자리 —
-            아래 &lsquo;건물 · 위치&rsquo;에서 관리
+            <span className="mono font-semibold text-slate-800">BB</span> 건물 번호 2자리 — 아래
+            &lsquo;건물명&rsquo;에서 관리
           </li>
           <li>
-            <span className="mono font-semibold text-slate-800">DD</span> 관리부서 번호 2자리 — 아래
-            &lsquo;관리부서&rsquo;에서 관리
+            <span className="mono font-semibold text-slate-800">DD</span> 사역원 번호 2자리 — 아래
+            &lsquo;사역원&rsquo;에서 관리
           </li>
           <li>
             <span className="mono font-semibold text-slate-800">SSSS</span> 물품 고유번호 4자리 —
@@ -82,13 +82,13 @@ export default async function SettingsPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <LookupManager
           kind="building"
-          title="건물 · 위치"
+          title="건물명"
           description="자산번호 3번째 자리에 들어갑니다. 예) 1 비전, 2 은혜, 3 은혜성전, 4 창고"
           rows={lookups.buildings}
         />
         <LookupManager
           kind="department"
-          title="관리부서"
+          title="사역원"
           description="자산번호 4번째 자리에 들어갑니다. 예) 1 예배사역원, 2 선교팀"
           rows={lookups.departments}
         />

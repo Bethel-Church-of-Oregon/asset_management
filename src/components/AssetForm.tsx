@@ -110,7 +110,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
             <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-3">
               <h2 className="text-sm font-bold text-slate-900">자산번호</h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                연도 2자리 + 건물 2자리 + 부서 2자리 + 고유번호 4자리
+                연도 2자리 + 건물 2자리 + 사역원 2자리 + 고유번호 4자리
               </p>
             </div>
 
@@ -133,12 +133,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
                   </select>
                 </Field>
 
-                <Field
-                  label="건물 / 위치"
-                  htmlFor="buildingCode"
-                  required
-                  error={errors.buildingCode}
-                >
+                <Field label="건물명" htmlFor="buildingCode" required error={errors.buildingCode}>
                   <select
                     id="buildingCode"
                     name="buildingCode"
@@ -156,7 +151,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
                   </select>
                 </Field>
 
-                <Field label="관리부서" htmlFor="deptCode" required error={errors.deptCode}>
+                <Field label="사역원" htmlFor="deptCode" required error={errors.deptCode}>
                   <select
                     id="deptCode"
                     name="deptCode"
@@ -164,7 +159,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
                     value={deptCode}
                     onChange={(e) => {
                       setDeptCode(e.target.value);
-                      // 팀명을 비워뒀다면 부서 이름으로 채워 줍니다.
+                      // 팀명을 비워뒀다면 사역원 이름으로 채워 줍니다.
                       const next = lookups.departments.find((d) => d.code === e.target.value);
                       if (next && teamName.trim() === '') setTeamName(next.name);
                     }}
@@ -253,7 +248,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
         </Field>
 
         {/* hint 를 두지 않습니다 — 입력칸 안내문(placeholder)과 같은 말이 되고,
-            선택한 부서는 바로 위 '관리부서' 칸에 이미 보입니다. */}
+            선택한 사역원은 바로 위 '사역원' 칸에 이미 보입니다. */}
         <Field label="관리팀명" htmlFor="teamName" error={errors.teamName}>
           <input
             id="teamName"
@@ -472,7 +467,7 @@ export default function AssetForm({ mode, lookups, yearOptions = [], asset, defa
             {mode === 'create' ? '등록 후 라벨 출력' : '변경사항 저장'}
           </SubmitButton>
 
-          {/* 같은 건물·부서·팀·장소를 유지한 빈 폼으로 돌아가 다음 번호를 채웁니다. */}
+          {/* 같은 건물·사역원·팀·장소를 유지한 빈 폼으로 돌아가 다음 번호를 채웁니다. */}
           {mode === 'create' ? (
             <SubmitButton
               className="btn-secondary"

@@ -36,7 +36,7 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-/** 건물/위치 — supplies the BB segment of the asset number. */
+/** 건물 — supplies the BB segment of the asset number. */
 export const buildings = pgTable('buildings', {
   id: serial('id').primaryKey(),
   // 2자리 숫자, 0 으로 채움 ('01'). 자리수를 고정해야 문자열 정렬이 번호 순서가 됩니다.
@@ -46,7 +46,7 @@ export const buildings = pgTable('buildings', {
   isActive: boolean('is_active').notNull().default(true),
 });
 
-/** 관리부서 — supplies the DD segment of the asset number. */
+/** 사역원 — supplies the DD segment of the asset number. */
 export const departments = pgTable('departments', {
   id: serial('id').primaryKey(),
   code: varchar('code', { length: 2 }).notNull().unique(),

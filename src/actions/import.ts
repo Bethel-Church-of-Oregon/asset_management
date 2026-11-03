@@ -10,6 +10,7 @@ import { getLookups, getMaxSeqByPrefix } from '@/lib/queries';
 import {
   IGNORED_COLUMNS,
   IMPORT_MAX_ROWS,
+  canonicalHeader,
   planImport,
   type ImportPlan,
   type PreparedRow,
@@ -51,7 +52,7 @@ async function readSheet(file: File): Promise<Record<string, string>[]> {
 
   const headers: string[] = [];
   sheet.getRow(1).eachCell({ includeEmpty: true }, (cell, col) => {
-    headers[col] = cellToText(cell.value);
+    headers[col] = canonicalHeader(cellToText(cell.value));
   });
   if (headers.filter(Boolean).length === 0) {
     throw new Error('첫 줄에서 머리글을 찾지 못했습니다. 템플릿을 받아 쓰세요.');

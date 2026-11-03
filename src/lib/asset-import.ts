@@ -27,8 +27,8 @@ export const IMPORT_MAX_ROWS = 500;
  */
 export const IMPORT_COLUMNS = {
   name: '자산명',
-  deptName: '관리부서',
-  buildingName: '건물/위치',
+  deptName: '사역원',
+  buildingName: '건물명',
   teamName: '관리팀명',
   location: '설치/보관 장소',
   acquiredDate: '취득일자',
@@ -44,6 +44,22 @@ export const IMPORT_COLUMNS = {
   warrantyUntil: '워런티 만료일',
   notes: '특이사항',
 } as const;
+
+/**
+ * 예전 열 이름 → 지금 열 이름.
+ *
+ * 이름을 바꾸기 전에 받아 둔 템플릿이나 내보낸 CSV 를 그대로 올려도 읽히도록
+ * 머리글을 지금 이름으로 바꿔 읽습니다.
+ */
+const LEGACY_HEADERS: Record<string, string> = {
+  관리부서: IMPORT_COLUMNS.deptName,
+  '건물/위치': IMPORT_COLUMNS.buildingName,
+};
+
+/** 머리글을 지금 열 이름으로 맞춥니다. 예전 이름이 아니면 그대로 돌려줍니다. */
+export function canonicalHeader(header: string): string {
+  return LEGACY_HEADERS[header] ?? header;
+}
 
 /** 반드시 채워야 하는 열. 나머지는 비어도 됩니다. */
 export const REQUIRED_COLUMNS = [
@@ -72,7 +88,7 @@ export type LookupEntry = { code: string; name: string };
 export type ImportContext = {
   buildings: LookupEntry[];
   departments: LookupEntry[];
-  /** 접두사(연도+건물+부서)별로 이미 쓰인 가장 큰 고유번호. 없으면 0. */
+  /** 접두사(연도+건물+사역원)별로 이미 쓰인 가장 큰 고유번호. 없으면 0. */
   maxSeqByPrefix: Map<string, number>;
 };
 
@@ -257,7 +273,10 @@ export function planImport(table: Record<string, string>[], ctx: ImportContext):
 
     const yearCode = yearCodeFor(acquiredDate);
     if (!isCode(building.code) || !isCode(dept.code)) {
-      add(IMPORT_COLUMNS.buildingName, '건물·부서 코드가 두 자리가 아닙니다. 설정에서 확인하세요.');
+      add(
+        IMPORT_COLUMNS.buildingName,
+        '건물·사역원 코드가 두 자리가 아닙니다. 설정에서 확인하세요.',
+      );
       return;
     }
 

@@ -526,7 +526,7 @@ export async function listAssetsForExport(params: AssetListParams, limit = 10000
 }
 
 /**
- * 접두사(연도+건물+부서)별로 이미 쓰인 가장 큰 고유번호.
+ * 접두사(연도+건물+사역원)별로 이미 쓰인 가장 큰 고유번호.
  *
  * 일괄 등록이 행마다 `getNextSeq` 를 부르면 조회가 행 수만큼 나가고, 같은 접두사가
  * 여러 줄일 때 같은 번호를 두 번 줍니다. 한 번에 받아 메모리에서 이어 붙입니다.

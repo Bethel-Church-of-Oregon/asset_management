@@ -70,14 +70,14 @@ async function upsertLookup(
 }
 
 export async function saveBuildingAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  return upsertLookup(buildings, formData, '건물/위치가');
+  return upsertLookup(buildings, formData, '건물이');
 }
 
 export async function saveDepartmentAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  return upsertLookup(departments, formData, '부서가');
+  return upsertLookup(departments, formData, '사역원이');
 }
 
 /**

@@ -115,7 +115,7 @@ async function main() {
   }
 
   // 자산번호 자리수 이관 여부 — 안 하면 화면의 코드 목록과 저장 형식이 어긋나
-  // "건물/위치를 선택하세요" 나 번호 제안 실패로 나타납니다.
+  // "건물명을 선택하세요" 나 번호 제안 실패로 나타납니다.
   const codeRows = toRows<{ table_name: string; character_maximum_length: number }>(
     await db.execute(sql`
       select table_name, character_maximum_length from information_schema.columns
@@ -124,7 +124,7 @@ async function main() {
   );
   const narrow = codeRows.filter((r) => Number(r.character_maximum_length) < CODE_DIGITS);
   console.log(
-    `  ${mark(narrow.length === 0)} 자산번호 자리수 (건물·부서 코드 ${CODE_DIGITS}자리)`,
+    `  ${mark(narrow.length === 0)} 자산번호 자리수 (건물·사역원 코드 ${CODE_DIGITS}자리)`,
   );
   if (narrow.length > 0) {
     fail('예전 자산번호 형식입니다. `npm run db:widen-asset-no` 를 실행하세요.');

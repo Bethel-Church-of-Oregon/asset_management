@@ -1,5 +1,5 @@
 /**
- * 최초 1회 실행: 기준정보(건물/부서)와 관리자 계정을 만듭니다.
+ * 최초 1회 실행: 기준정보(건물/사역원)와 관리자 계정을 만듭니다.
  *
  *   npm run db:push     # 테이블 생성
  *   npm run db:seed     # 기준정보 + 관리자 계정
@@ -178,7 +178,7 @@ async function main() {
   const [{ count: deptCount }] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(departments);
-  console.log(`  건물 ${buildingCount}건 / 부서 ${deptCount}건`);
+  console.log(`  건물 ${buildingCount}건 / 사역원 ${deptCount}건`);
 
   const email = (process.env.SEED_ADMIN_EMAIL ?? '').trim().toLowerCase();
   // 로그인은 아이디로 합니다. SEED_ADMIN_USERNAME 이 없으면 예전 설정 파일도 그대로

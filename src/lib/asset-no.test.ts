@@ -40,7 +40,13 @@ import {
   isMoneyAmount,
   parseMoneyInput,
 } from './format';
-import { IMPORT_COLUMNS, IMPORT_MAX_ROWS, planImport, type ImportContext } from './asset-import';
+import {
+  IMPORT_COLUMNS,
+  IMPORT_MAX_ROWS,
+  canonicalHeader,
+  planImport,
+  type ImportContext,
+} from './asset-import';
 import { cleanUsername, isUsername, usernameFromEmail } from './username';
 
 let passed = 0;
@@ -366,11 +372,17 @@ test('실패한 행은 번호를 쓰지 않는다', () => {
   );
 });
 
-test('건물·부서를 이름 대신 코드로 적어도 받는다', () => {
+test('건물·사역원을 이름 대신 코드로 적어도 받는다', () => {
   const plan = planImport([row({ [C.buildingName]: '01', [C.deptName]: '3' })], IMPORT_CTX);
   assert.equal(plan.errors.length, 0);
   assert.equal(plan.rows[0].buildingCode, '01');
   assert.equal(plan.rows[0].deptCode, '03');
+});
+
+test('예전 머리글(관리부서 · 건물/위치)도 지금 열로 읽는다', () => {
+  assert.equal(canonicalHeader('관리부서'), C.deptName);
+  assert.equal(canonicalHeader('건물/위치'), C.buildingName);
+  assert.equal(canonicalHeader(C.name), C.name);
 });
 
 test('금액·날짜·수량 판정을 기존 규칙으로 돌린다', () => {

@@ -150,8 +150,8 @@ export default function AssetImport({ batches }: { batches: ImportBatchRow[] }) 
                     <th className="px-4 py-2 font-medium">행</th>
                     <th className="px-4 py-2 font-medium">자산번호 (예정)</th>
                     <th className="px-4 py-2 font-medium">자산명</th>
-                    <th className="px-4 py-2 font-medium">건물</th>
-                    <th className="px-4 py-2 font-medium">부서</th>
+                    <th className="px-4 py-2 font-medium">건물명</th>
+                    <th className="px-4 py-2 font-medium">사역원</th>
                   </tr>
                 </thead>
                 <tbody>

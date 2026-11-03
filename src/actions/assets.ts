@@ -63,8 +63,8 @@ const optionalMoney = z
  */
 const assetNoSchema = z.object({
   yearCode: z.string().trim().refine(isYearCode, '취득연도를 선택하세요.'),
-  buildingCode: z.string().trim().refine(isCode, '건물/위치를 선택하세요.'),
-  deptCode: z.string().trim().refine(isCode, '관리부서를 선택하세요.'),
+  buildingCode: z.string().trim().refine(isCode, '건물명을 선택하세요.'),
+  deptCode: z.string().trim().refine(isCode, '사역원을 선택하세요.'),
   seq: z
     .string()
     .trim()
@@ -235,7 +235,7 @@ export async function createAssetAction(_prev: FormState, formData: FormData): P
   revalidatePath('/');
 
   if (continueRegistering) {
-    // 연속 등록: 같은 건물/부서으로 폼을 비우고 다음 번호를 미리 채웁니다.
+    // 연속 등록: 같은 건물/사역원으로 폼을 비우고 다음 번호를 미리 채웁니다.
     const params = new URLSearchParams({
       year: (formData.get('yearCode') ?? '').toString(),
       building: (formData.get('buildingCode') ?? '').toString(),
@@ -461,7 +461,7 @@ export async function deleteMaintenanceAction(formData: FormData): Promise<void>
   revalidatePath(`/assets/${assetId}`);
 }
 
-/** 등록 폼에서 건물/부서/연도를 바꿀 때 다음 고유번호를 받아옵니다. */
+/** 등록 폼에서 건물/사역원/연도를 바꿀 때 다음 고유번호를 받아옵니다. */
 /**
  * 다음 고유번호 제안.
  *
